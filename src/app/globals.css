@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 219 25% 18%;
+    --foreground: 35 80% 88%;
+    --card: 219 25% 18%;
+    --card-foreground: 35 80% 88%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 35 80% 88%;
+    --primary: 28 48% 50%;
+    --primary-foreground: 35 80% 88%;
+    --secondary: 240 5.9% 10%;
+    --secondary-foreground: 35 80% 88%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 35 60% 88%;
+    --accent: 16 37% 53%;
+    --accent-foreground: 35 80% 88%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 35 80% 88%;
+    --border: 16 37% 53%;
+    --input: 240 3.7% 15.9%;
+    --ring: 28 48% 50%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
