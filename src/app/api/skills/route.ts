@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
-import { db } from "@/src/server/db"
-import { skills, projects, projectsToSkills } from "@/server/db/schema"
+import { db } from "@/server/db"
+import { skills, projects, projectsToSkills, type Skill, type SkillWithProjects } from "@/server/db/schema"
 import { eq } from "drizzle-orm"
+import type { CreateSkillRequest, SkillWithProjects as SkillWithProjectsType, SkillsByCategory } from "@/types/skills"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -13,13 +14,11 @@ export async function GET(request: Request) {
       const allSkills = await db.select().from(skills).orderBy(skills.category, skills.name)
 
       // Group skills by category
-      const skillsByCategory: Record<string, (typeof skills.$inferSelect)[]> = {}
+      const skillsByCategory: SkillsByCategory = {}
 
       allSkills.forEach((skill) => {
-        if (!skillsByCategory[skill.category]) {
-          skillsByCategory[skill.category] = []
-        }
-        skillsByCategory[skill.category].push(skill)
+        skillsByCategory[skill.category] ??= []
+        skillsByCategory[skill.category]!.push(skill)
       })
 
       return NextResponse.json(skillsByCategory)
@@ -37,7 +36,7 @@ export async function GET(request: Request) {
       .orderBy(skills.category, skills.name)
 
     // Group skills and their projects
-    const skillsMap = new Map()
+    const skillsMap = new Map<number, SkillWithProjectsType>()
 
     result.forEach((row) => {
       if (!skillsMap.has(row.skill.id)) {
@@ -48,8 +47,8 @@ export async function GET(request: Request) {
       }
 
       if (row.project) {
-        const skill = skillsMap.get(row.skill.id)
-        if (!skill.projects.some((p: any) => p.id === row.project.id)) {
+        const skill = skillsMap.get(row.skill.id)!
+        if (!skill.projects.some((p) => p.id === row.project!.id)) {
           skill.projects.push(row.project)
         }
       }
@@ -64,10 +63,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const body = await request.json() as CreateSkillRequest
 
     // Validate required fields
-    const requiredFields = ["name", "category", "level"]
+    const requiredFields: (keyof CreateSkillRequest)[] = ["name", "category", "level"]
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json({ error: `${field} is required` }, { status: 400 })
@@ -80,8 +79,8 @@ export async function POST(request: Request) {
       name: body.name,
       category: body.category,
       level: body.level,
-      icon: body.icon || "code",
-      color: body.color || "from-[#B97452] to-[#C17E3D]",
+      icon: body.icon ?? "code",
+      color: body.color ?? "from-[#B97452] to-[#C17E3D]",
       createdAt: new Date(),
     }
 
