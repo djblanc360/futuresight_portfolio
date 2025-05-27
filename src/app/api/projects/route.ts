@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
-import { db } from "@/src/server/db"
-import { projects, skills, projectsToSkills } from "@/server/db/schema"
+import { db } from "@/server/db"
+import { projects, skills, projectsToSkills, type Project, type Skill, type ProjectWithSkills } from "@/server/db/schema"
 import { eq, desc } from "drizzle-orm"
+import type { CreateProjectRequest } from "@/types/projects"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -26,11 +27,11 @@ export async function GET(request: Request) {
       }
 
       // Group skills for the project
-      const project = result[0].project
+      const project = result[0]!.project
       const projectSkills = result
         .filter((row) => row.skill !== null)
         .map((row) => row.skill)
-        .filter((skill): skill is typeof skills.$inferSelect => skill !== null)
+        .filter((skill): skill is Skill => skill !== null)
 
       return NextResponse.json({
         ...project,
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
         .orderBy(desc(projects.date))
 
       // Group projects and their skills
-      const projectsMap = new Map()
+      const projectsMap = new Map<number, ProjectWithSkills>()
 
       result.forEach((row) => {
         if (!projectsMap.has(row.project.id)) {
@@ -63,8 +64,8 @@ export async function GET(request: Request) {
         }
 
         if (row.skill) {
-          const project = projectsMap.get(row.project.id)
-          if (!project.skills.some((s: any) => s.id === row.skill.id)) {
+          const project = projectsMap.get(row.project.id)!
+          if (!project.skills.some((s) => s.id === row.skill!.id)) {
             project.skills.push(row.skill)
           }
         }
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
       .orderBy(desc(projects.date))
 
     // Group projects and their skills
-    const projectsMap = new Map()
+    const projectsMap = new Map<number, ProjectWithSkills>()
 
     result.forEach((row) => {
       if (!projectsMap.has(row.project.id)) {
@@ -96,8 +97,8 @@ export async function GET(request: Request) {
       }
 
       if (row.skill) {
-        const project = projectsMap.get(row.project.id)
-        if (!project.skills.some((s: any) => s.id === row.skill.id)) {
+        const project = projectsMap.get(row.project.id)!
+        if (!project.skills.some((s) => s.id === row.skill!.id)) {
           project.skills.push(row.skill)
         }
       }
@@ -112,10 +113,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const body = await request.json() as CreateProjectRequest
 
     // Validate required fields
-    const requiredFields = ["title", "slug", "company", "date", "description", "caseStudy"]
+    const requiredFields: (keyof CreateProjectRequest)[] = ["title", "slug", "company", "date", "description", "caseStudy"]
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json({ error: `${field} is required` }, { status: 400 })
@@ -130,11 +131,11 @@ export async function POST(request: Request) {
       company: body.company,
       date: new Date(body.date),
       description: body.description,
-      githubUrl: body.githubUrl || null,
-      demoUrl: body.demoUrl || null,
-      imageUrl: body.imageUrl || null,
+      githubUrl: body.githubUrl ?? null,
+      demoUrl: body.demoUrl ?? null,
+      imageUrl: body.imageUrl ?? null,
       caseStudy: body.caseStudy,
-      featured: body.featured || 0,
+      featured: body.featured ?? 0,
       createdAt: new Date(),
     }
 
