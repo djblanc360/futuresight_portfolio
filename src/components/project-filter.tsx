@@ -308,7 +308,7 @@ export function ProjectFilter() {
                 onClick={resetFilter}
                 variant="outline"
                 size="sm"
-                className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/20"
+                className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/20 bg-[#222B39]"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
