@@ -43,12 +43,12 @@ export function TarotCard({ title, description, icon, tags }: TarotCardProps) {
     <div className="w-[240px] mx-auto">
       <div
         ref={cardRef}
-        className="relative h-[360px] perspective-1000 group"
+        className="relative h-[360px] [perspective:1000px] group"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className="absolute inset-0 transition-all duration-500 preserve-3d cursor-pointer"
+          className="absolute inset-0 transition-all duration-500 [transform-style:preserve-3d] cursor-pointer"
           style={{
             transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y + (isFlipped ? 180 : 0)}deg)`,
           }}
@@ -72,7 +72,7 @@ export function TarotCard({ title, description, icon, tags }: TarotCardProps) {
           </Card>
 
           {/* Back of card */}
-          <Card className="absolute inset-0 backface-hidden rotate-y-180 border-[#B97452]/30 bg-[#222B39] shadow-xl shadow-[#B97452]/20 overflow-hidden">
+          <Card className="absolute inset-0 rotate-y-180 backface-hidden border-[#B97452]/30 bg-[#222B39] shadow-xl shadow-[#B97452]/20 overflow-hidden">
             <div className="absolute inset-0 bg-[url('/images/magical-bg.png')] opacity-5 bg-repeat"></div>
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B97452]/0 via-[#B97452] to-[#B97452]/0"></div>
             <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#B97452]/0 via-[#B97452] to-[#B97452]/0"></div>

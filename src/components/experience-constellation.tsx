@@ -276,8 +276,8 @@ export function ExperienceConstellation() {
             "absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 z-20 max-w-md w-full",
             isZoomed ? "opacity-100" : "opacity-0 pointer-events-none",
             getContentPosition(selectedExperience.x) === "left"
-              ? "right-[55%] translate-x-0"
-              : "left-[55%] translate-x-0",
+              ? "md:right-[55%] translate-x-0"
+              : "md:left-[55%] translate-x-0",
           )}
         >
           <Card
