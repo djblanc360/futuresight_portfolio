@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { db } from "@/server/db"
-import { skills, projects, projectsToSkills, type Skill, type SkillWithProjects } from "@/server/db/schema"
+import { skills, projects, projectsToSkills } from "@/server/db/schema"
 import { eq } from "drizzle-orm"
-import type { CreateSkillRequest, SkillWithProjects as SkillWithProjectsType, SkillsByCategory } from "@/types/skills"
+import type { CreateSkillRequest, SkillWithProjects, SkillsByCategory } from "@/types/skills"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       .orderBy(skills.category, skills.name)
 
     // Group skills and their projects
-    const skillsMap = new Map<number, SkillWithProjectsType>()
+    const skillsMap = new Map<number, SkillWithProjects>()
 
     result.forEach((row) => {
       if (!skillsMap.has(row.skill.id)) {

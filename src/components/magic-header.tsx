@@ -42,14 +42,14 @@ export function MagicHeader() {
               Projects
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-700 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link href="#contact" className="text-[#FAE3C6] hover:text-[#C17E3D] transition-colors relative group">
+            <Link href="/#contact" className="text-[#FAE3C6] hover:text-[#C17E3D] transition-colors relative group">
               Contact
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-700 group-hover:w-full transition-all duration-300"></span>
             </Link>
             <Link href="/dashboard">
               <Button
                 variant="outline"
-                className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/80 hover:border-[#C17E3D] bg-[#222B39]"
+                className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/80 hover:border-[#C17E3D] bg-[#222B39] cursor-pointer"
               >
                 Dashboard
               </Button>

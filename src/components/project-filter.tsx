@@ -23,9 +23,10 @@ import { ProjectCard } from "@/components/project-card"
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getProjectsWithSkills, skillsData } from "@/server/mock-data"
-import type { Skill, ProjectWithSkills } from "@/server/db/schema"
+import type { Skill } from "@/types/skills"
+import type { ProjectWithSkills } from "@/types/projects"
 
-interface SkillCardProps {
+type SkillCardProps = {
   skill: Skill
   isDragging?: boolean
   isInDeck?: boolean
@@ -77,7 +78,7 @@ function SkillCard({ skill, isDragging, isInDeck }: SkillCardProps) {
   )
 }
 
-interface DroppableSlotProps {
+type DroppableSlotProps = {
   id: string
   skill: Skill | null
   position: number

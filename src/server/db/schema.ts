@@ -58,16 +58,6 @@ export const projectsToSkillsRelations = relations(projectsToSkills, ({ one }) =
   }),
 }))
 
-// Types for our schema
-export type Project = typeof projects.$inferSelect
-export type Skill = typeof skills.$inferSelect
-export type ProjectToSkill = typeof projectsToSkills.$inferSelect
-
-// Extended types with relations
-export interface ProjectWithSkills extends Project {
-  skills: Skill[]
-}
-
-export interface SkillWithProjects extends Skill {
-  projects: Project[]
-}
+// Re-export centralized types for backwards compatibility
+export type { Project, ProjectWithSkills, ProjectToSkill } from "@/types/projects"
+export type { Skill, SkillWithProjects } from "@/types/skills"

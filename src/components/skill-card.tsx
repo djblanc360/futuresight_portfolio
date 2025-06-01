@@ -4,26 +4,32 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-interface SkillCardProps {
-  name: string
-  level: number
+type SkillCardProps = {
+  skill: {
+    name: string
+    level: number
+    category: string
+    color?: string | null
+  }
+  className?: string
 }
 
-export function SkillCard({ name, level }: SkillCardProps) {
+export function SkillCard({ skill, className }: SkillCardProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [currentLevel, setCurrentLevel] = useState(0)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting) {
           setIsVisible(true)
         }
       },
       { threshold: 0.1 },
     )
 
-    const currentElement = document.getElementById(`skill-${name}`)
+    const currentElement = document.getElementById(`skill-${skill.name}`)
     if (currentElement) {
       observer.observe(currentElement)
     }
@@ -33,28 +39,31 @@ export function SkillCard({ name, level }: SkillCardProps) {
         observer.unobserve(currentElement)
       }
     }
-  }, [name])
+  }, [skill.name])
 
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {
-        if (currentLevel < level) {
-          setCurrentLevel((prev) => Math.min(prev + 1, level))
+        if (currentLevel < skill.level) {
+          setCurrentLevel((prev) => Math.min(prev + 1, skill.level))
         }
       }, 20)
 
       return () => clearTimeout(timer)
     }
-  }, [isVisible, currentLevel, level])
+  }, [isVisible, currentLevel, skill.level])
 
   return (
     <Card
-      id={`skill-${name}`}
-      className="border-[#B97452]/30 bg-[#030304]/80 shadow-lg hover:shadow-[#B97452]/30 transition-shadow duration-300 overflow-hidden group"
+      id={`skill-${skill.name}`}
+      className={cn(
+        "border-[#B97452]/30 bg-[#030304]/80 shadow-lg hover:shadow-[#B97452]/30 transition-shadow duration-300 overflow-hidden group",
+        className
+      )}
     >
       <CardContent className="p-4">
         <div className="text-center mb-3">
-          <h3 className="font-bold text-[#C17E3D] group-hover:scale-110 transition-transform duration-300">{name}</h3>
+          <h3 className="font-bold text-[#C17E3D] group-hover:scale-110 transition-transform duration-300">{skill.name}</h3>
         </div>
 
         <div className="relative h-2 bg-[#B97452]/70 rounded-full overflow-hidden">

@@ -6,13 +6,8 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Sparkles, Code, Database, Cloud, Palette, TestTube, Package } from "lucide-react"
+import type { SkillCategory } from "@/types/skills"
 
-interface SkillCategory {
-  name: string
-  icon: React.ReactNode
-  skills: Array<{ name: string; level: number }>
-  color: string
-}
 
 const skillCategories: SkillCategory[] = [
   {

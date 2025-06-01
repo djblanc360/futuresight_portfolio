@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, X, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { skillsData, projectsData } from "@/server/mock-data"
-import type { Skill, Project } from "@/server/db/schema"
+import type { Skill } from "@/types/skills"
+import type { Project } from "@/types/projects"
 
 export function DashboardContent() {
   const [skills, setSkills] = useState<Skill[]>(skillsData)

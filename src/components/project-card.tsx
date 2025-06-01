@@ -2,9 +2,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { ProjectWithSkills } from "@/server/db/schema"
+import type { ProjectWithSkills } from "@/types/projects"
 
-interface ProjectCardProps {
+type ProjectCardProps = {
   project: ProjectWithSkills
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 
-interface MDXContentProps {
+type MDXContentProps = {
   content: string
 }
 

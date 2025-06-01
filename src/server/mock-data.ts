@@ -1,4 +1,5 @@
-import type { Project, Skill, ProjectWithSkills, SkillWithProjects } from "./db/schema"
+import type { Project, ProjectWithSkills, ProjectToSkill } from "@/types/projects"
+import type { Skill, SkillWithProjects } from "@/types/skills"
 
 // Mock skills data
 export const skillsData: Skill[] = [
@@ -533,7 +534,7 @@ export function getSkillsByCategory(): Record<string, Skill[]> {
     if (!categories[skill.category]) {
       categories[skill.category] = []
     }
-    categories[skill.category].push(skill)
+    categories[skill.category]!.push(skill)
   })
 
   return categories

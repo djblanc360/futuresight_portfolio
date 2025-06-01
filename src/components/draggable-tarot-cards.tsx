@@ -17,7 +17,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 
-interface TarotCard {
+type TarotCard = {
   id: string
   title: string
   image: string
@@ -29,7 +29,7 @@ const initialCards: TarotCard[] = [
   { id: "researcher", title: "The Researcher", image: "/images/researcher-card.jpg" },
 ]
 
-interface SortableCardProps {
+type SortableCardProps = {
   card: TarotCard
   isDragging?: boolean
 }

@@ -1,17 +1,19 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+
+
 import { Github, Linkedin, Mail } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
 import { MagicHeader } from "@/components/magic-header"
+import { Hero } from "@/components/hero"
 import { ExperienceConstellation } from "@/components/experience-constellation"
 import { MagicalSkillCards } from "@/components/magical-skill-card"
-import { DraggableTarotCards } from "@/components/draggable-tarot-cards"
 import { StarryBackgroundAnimated } from "@/components/starry-background-animated"
 import { StarryBackground } from "@/components/starry-background"
 import { ProjectHighlights } from "@/components/project-highlights"
 
 export default function Home() {
+
   return (
     <div className="min-h-screen bg-[#030304] text-[#FAE3C6] font-serif">
       <MagicHeader />
@@ -23,32 +25,7 @@ export default function Home() {
         </div>
 
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-          <div className="container mx-auto px-4 py-20 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6 text-center lg:text-left">
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-[#C17E3D]">
-                  <span className="block">Crafting Digital</span>
-                  <span className="block mt-2">Magic with Code</span>
-                </h1>
-                <p className="text-xl text-[#FAE3C6]/80 max-w-xl mx-auto lg:mx-0">
-                  Fullstack developer conjuring elegant solutions through the art of programming. Transforming ideas
-                  into digital reality.
-                </p>
-                <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                  <Button className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6] border border-[#C17E3D]/50 shadow-lg shadow-[#B97452]/30">
-                    View My Work
-                  </Button>
-                  <Button variant="outline" className="bg-[#222B39] border-[#B97452] text-[#C17E3D] hover:bg-[#B97452]/80">
-                    Contact Me
-                  </Button>
-                </div>
-              </div>
-
-              <DraggableTarotCards />
-            </div>
-          </div>
-        </section>
+        <Hero />
 
         {/* Projects Section */}
         <section id="projects" className="py-20 relative">
