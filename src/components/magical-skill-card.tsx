@@ -7,80 +7,36 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Sparkles, Code, Database, Cloud, Palette, TestTube, Package } from "lucide-react"
 import type { SkillCategory } from "@/types/skills"
+import { getSkillCategoriesData } from "@/server/mock-data"
 
+// Icon mapping for categories
+const categoryIcons: Record<string, React.ReactNode> = {
+  "Frontend": <Palette className="w-5 h-5" />,
+  "Backend": <Code className="w-5 h-5" />,
+  "Database": <Database className="w-5 h-5" />,
+  "Cloud & DevOps": <Cloud className="w-5 h-5" />,
+  "Testing": <TestTube className="w-5 h-5" />,
+  "Tools": <Package className="w-5 h-5" />,
+}
 
-const skillCategories: SkillCategory[] = [
-  {
-    name: "Frontend",
-    icon: <Palette className="w-5 h-5" />,
-    color: "from-[#B97452] to-[#C17E3D]",
-    skills: [
-      { name: "React", level: 90 },
-      { name: "TypeScript", level: 85 },
-      { name: "Next.js", level: 85 },
-      { name: "Tailwind CSS", level: 90 },
-    ],
-  },
-  {
-    name: "Backend",
-    icon: <Code className="w-5 h-5" />,
-    color: "from-[#C17E3D] to-[#B97452]",
-    skills: [
-      { name: "Node.js", level: 85 },
-      { name: "Express", level: 80 },
-      { name: "GraphQL", level: 75 },
-      { name: "REST APIs", level: 90 },
-    ],
-  },
-  {
-    name: "Database",
-    icon: <Database className="w-5 h-5" />,
-    color: "from-[#B97452] to-[#FAE3C6]",
-    skills: [
-      { name: "MongoDB", level: 80 },
-      { name: "PostgreSQL", level: 75 },
-      { name: "Redis", level: 70 },
-      { name: "Prisma", level: 80 },
-    ],
-  },
-  {
-    name: "Cloud & DevOps",
-    icon: <Cloud className="w-5 h-5" />,
-    color: "from-[#FAE3C6] to-[#C17E3D]",
-    skills: [
-      { name: "AWS", level: 70 },
-      { name: "Docker", level: 75 },
-      { name: "CI/CD", level: 80 },
-      { name: "Vercel", level: 85 },
-    ],
-  },
-  {
-    name: "Testing",
-    icon: <TestTube className="w-5 h-5" />,
-    color: "from-[#C17E3D] to-[#B97452]",
-    skills: [
-      { name: "Jest", level: 75 },
-      { name: "Cypress", level: 70 },
-      { name: "React Testing", level: 80 },
-      { name: "E2E Testing", level: 75 },
-    ],
-  },
-  {
-    name: "Tools",
-    icon: <Package className="w-5 h-5" />,
-    color: "from-[#B97452] to-[#C17E3D]",
-    skills: [
-      { name: "Git", level: 90 },
-      { name: "Webpack", level: 70 },
-      { name: "Vite", level: 80 },
-      { name: "Redux", level: 80 },
-    ],
-  },
-]
+// Helper function to convert data to SkillCategory with icons
+function createSkillCategories(): SkillCategory[] {
+  const categoriesData = getSkillCategoriesData()
+  
+  return categoriesData.map(categoryData => ({
+    name: categoryData.name,
+    icon: categoryIcons[categoryData.name] || <Code className="w-5 h-5" />,
+    color: categoryData.color,
+    skills: categoryData.skills
+  }))
+}
 
 export function MagicalSkillCards() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
+  
+  // Get skill categories from mock data
+  const skillCategories = createSkillCategories()
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

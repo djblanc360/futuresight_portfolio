@@ -1,6 +1,28 @@
 import type { Project, ProjectWithSkills, ProjectToSkill } from "@/types/projects"
 import type { Skill, SkillWithProjects } from "@/types/skills"
 
+// Skill category configuration with colors only
+const skillCategoryConfig: Record<string, { color: string }> = {
+  "Frontend": {
+    color: "from-[#B97452] to-[#C17E3D]"
+  },
+  "Backend": {
+    color: "from-[#C17E3D] to-[#B97452]"
+  },
+  "Database": {
+    color: "from-[#B97452] to-[#FAE3C6]"
+  },
+  "Cloud & DevOps": {
+    color: "from-[#FAE3C6] to-[#C17E3D]"
+  },
+  "Testing": {
+    color: "from-[#C17E3D] to-[#B97452]"
+  },
+  "Tools": {
+    color: "from-[#B97452] to-[#C17E3D]"
+  }
+}
+
 // Mock skills data
 export const skillsData: Skill[] = [
   {
@@ -537,5 +559,44 @@ export function getSkillsByCategory(): Record<string, Skill[]> {
     categories[skill.category]!.push(skill)
   })
 
+  return categories
+}
+
+// Helper function to get skill categories (without icons - to be added in component)
+export function getSkillCategoriesData(): Array<{
+  name: string
+  color: string
+  skills: Array<{ name: string; level: number; category: string }>
+}> {
+  const categories: Array<{
+    name: string
+    color: string
+    skills: Array<{ name: string; level: number; category: string }>
+  }> = []
+  
+  // Get unique categories from skills data
+  const uniqueCategories = [...new Set(skillsData.map(skill => skill.category))]
+  
+  uniqueCategories.forEach(categoryName => {
+    const categorySkills = skillsData
+      .filter(skill => skill.category === categoryName)
+      .map(skill => ({
+        name: skill.name,
+        level: skill.level,
+        category: skill.category
+      }))
+    
+    if (categorySkills.length > 0) {
+      const config = skillCategoryConfig[categoryName]
+      if (config) {
+        categories.push({
+          name: categoryName,
+          color: config.color,
+          skills: categorySkills
+        })
+      }
+    }
+  })
+  
   return categories
 }

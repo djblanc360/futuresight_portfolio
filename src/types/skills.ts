@@ -38,11 +38,14 @@ export type CreateSkillRequest = {
   color?: string
 }
 
+// UI-specific skill representation (subset of Skill properties)
+export type UISkill = Pick<Skill, 'name' | 'level' | 'category'>
+
 // UI component types
 export type SkillCategory = {
   name: string
   icon: React.ReactNode
-  skills: Array<{ name: string; level: number }>
+  skills: UISkill[]
   color: string
 }
 
