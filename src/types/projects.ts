@@ -4,12 +4,12 @@ export type Project = {
   title: string
   slug: string
   company: string
-  date: Date
+  date?: Date
   description: string
-  githubUrl: string | null
-  demoUrl: string | null
+  githubUrl?: string | null
+  demoUrl?: string | null
   imageUrl: string | null
-  caseStudy: string
+  caseStudy?: string
   featured: number | null
   createdAt: Date | null
 }
@@ -19,7 +19,7 @@ export type ProjectWithSkills = Project & {
   skills: Array<{
     id: number
     name: string
-    category: string
+    categories: string[]
     level: number
     icon: string | null
     color: string | null
@@ -34,7 +34,7 @@ export type CreateProjectRequest = {
   company: string
   date: string
   description: string
-  caseStudy: string
+  caseStudy?: string
   githubUrl?: string
   demoUrl?: string
   imageUrl?: string
@@ -45,7 +45,7 @@ export type ProjectResponse = Project & {
   skills: Array<{
     id: number
     name: string
-    category: string
+    categories: string[]
     level: number
     icon: string | null
     color: string | null

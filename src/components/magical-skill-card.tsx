@@ -27,7 +27,11 @@ function createSkillCategories(): SkillCategory[] {
     name: categoryData.name,
     icon: categoryIcons[categoryData.name] || <Code className="w-5 h-5" />,
     color: categoryData.color,
-    skills: categoryData.skills
+    skills: categoryData.skills.map(skill => ({
+      name: skill.name,
+      level: skill.level,
+      categories: skill.categories
+    }))
   }))
 }
 

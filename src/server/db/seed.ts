@@ -18,7 +18,7 @@ export async function seed() {
       await db.insert(skills).values({
         id: skill.id,
         name: skill.name,
-        category: skill.category,
+        categories: JSON.stringify(skill.categories), // Store as JSON string
         level: skill.level,
         icon: skill.icon,
         color: skill.color,
@@ -30,11 +30,10 @@ export async function seed() {
     console.log("Inserting projects...")
     for (const project of projectsData) {
       await db.insert(projects).values({
-        id: project.id,
         title: project.title,
         slug: project.slug,
         company: project.company,
-        date: project.date,
+        date: project.date ?? new Date(),
         description: project.description,
         githubUrl: project.githubUrl,
         demoUrl: project.demoUrl,

@@ -11,14 +11,25 @@ export async function GET(request: Request) {
   try {
     if (byCategory === "true") {
       // Get all skills grouped by category
-      const allSkills = await db.select().from(skills).orderBy(skills.category, skills.name)
+      const allSkills = await db.select().from(skills).orderBy(skills.name)
 
-      // Group skills by category
+      // Parse categories from JSON and group skills by category
       const skillsByCategory: SkillsByCategory = {}
 
       allSkills.forEach((skill) => {
-        skillsByCategory[skill.category] ??= []
-        skillsByCategory[skill.category]!.push(skill)
+        const categories = JSON.parse(skill.categories) as string[]
+        categories.forEach((category) => {
+          skillsByCategory[category] ??= []
+          // Parse the skill to include categories as array
+          const skillWithCategories = {
+            ...skill,
+            categories,
+          }
+          // Avoid duplicates
+          if (!skillsByCategory[category]!.some((s) => s.id === skill.id)) {
+            skillsByCategory[category]!.push(skillWithCategories)
+          }
+        })
       })
 
       return NextResponse.json(skillsByCategory)
@@ -33,15 +44,18 @@ export async function GET(request: Request) {
       .from(skills)
       .leftJoin(projectsToSkills, eq(skills.id, projectsToSkills.skillId))
       .leftJoin(projects, eq(projectsToSkills.projectId, projects.id))
-      .orderBy(skills.category, skills.name)
+      .orderBy(skills.name)
 
     // Group skills and their projects
     const skillsMap = new Map<number, SkillWithProjects>()
 
     result.forEach((row) => {
       if (!skillsMap.has(row.skill.id)) {
+        // Parse categories from JSON
+        const categories = JSON.parse(row.skill.categories) as string[]
         skillsMap.set(row.skill.id, {
           ...row.skill,
+          categories,
           projects: [],
         })
       }
@@ -66,18 +80,23 @@ export async function POST(request: Request) {
     const body = await request.json() as CreateSkillRequest
 
     // Validate required fields
-    const requiredFields: (keyof CreateSkillRequest)[] = ["name", "category", "level"]
+    const requiredFields: (keyof CreateSkillRequest)[] = ["name", "categories", "level"]
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json({ error: `${field} is required` }, { status: 400 })
       }
+    }
+    
+    // Validate categories is an array
+    if (!Array.isArray(body.categories) || body.categories.length === 0) {
+      return NextResponse.json({ error: "categories must be a non-empty array" }, { status: 400 })
     }
 
     // Create new skill with generated ID
     const newSkill = {
       id: Date.now(), // Simple ID generation for demo
       name: body.name,
-      category: body.category,
+      categories: body.categories,
       level: body.level,
       icon: body.icon ?? "code",
       color: body.color ?? "from-[#B97452] to-[#C17E3D]",

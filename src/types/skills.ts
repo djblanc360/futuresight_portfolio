@@ -4,7 +4,7 @@ import type React from "react"
 export type Skill = {
   id: number
   name: string
-  category: string
+  categories: string[]
   level: number
   icon: string | null
   color: string | null
@@ -18,12 +18,12 @@ export type SkillWithProjects = Skill & {
     title: string
     slug: string
     company: string
-    date: Date
+    date?: Date
     description: string
-    githubUrl: string | null
-    demoUrl: string | null
+    githubUrl?: string | null
+    demoUrl?: string | null
     imageUrl: string | null
-    caseStudy: string
+    caseStudy?: string
     featured: number | null
     createdAt: Date | null
   }>
@@ -32,20 +32,20 @@ export type SkillWithProjects = Skill & {
 // API request types
 export type CreateSkillRequest = {
   name: string
-  category: string
+  categories: string[]
   level: number
   icon?: string
   color?: string
 }
 
 // UI-specific skill representation (subset of Skill properties)
-export type UISkill = Pick<Skill, 'name' | 'level' | 'category'>
+export type UISkill = Pick<Skill, 'name' | 'level' | 'categories'>
 
 // UI component types
 export type SkillCategory = {
   name: string
   icon: React.ReactNode
-  skills: UISkill[]
+  skills: Array<{ name: string; level: number; categories: string[] }>
   color: string
 }
 

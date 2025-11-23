@@ -21,7 +21,7 @@ export const projects = pgTable("portfolio_projects", {
 export const skills = pgTable("portfolio_skills", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
-  category: text("category").notNull(),
+  categories: text("categories").notNull(), // JSON array stored as text
   level: integer("level").notNull(),
   icon: text("icon"),
   color: text("color"),

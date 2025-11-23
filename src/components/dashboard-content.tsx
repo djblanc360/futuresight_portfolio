@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, X, Check } from "lucide-react"
+import { Plus, Trash2, X, Check, Edit2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { skillsData, projectsData } from "@/server/mock-data"
 import type { Skill } from "@/types/skills"
@@ -16,7 +16,7 @@ export function DashboardContent() {
   const [projects, setProjects] = useState<Project[]>(projectsData)
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [newSkillName, setNewSkillName] = useState("")
-  const [newSkillCategory, setNewSkillCategory] = useState("")
+  const [newSkillCategories, setNewSkillCategories] = useState<string[]>([])
   const [error, setError] = useState("")
 
   const [isAddingProject, setIsAddingProject] = useState(false)
@@ -34,7 +34,19 @@ export function DashboardContent() {
   })
   const [projectError, setProjectError] = useState("")
 
-  const skillCategories = ["Frontend", "Backend", "Database", "Cloud & DevOps", "Testing", "Tools"]
+  const [skillCategories, setSkillCategories] = useState<string[]>([
+    "Frontend",
+    "Backend",
+    "Database",
+    "Cloud & DevOps",
+    "Testing",
+    "Tools",
+  ])
+  const [isManagingCategories, setIsManagingCategories] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  const [editingCategoryName, setEditingCategoryName] = useState("")
+  const [categoryError, setCategoryError] = useState("")
 
   const handleAddSkill = () => {
     setError("")
@@ -44,8 +56,8 @@ export function DashboardContent() {
       return
     }
 
-    if (!newSkillCategory.trim()) {
-      setError("Skill category is required")
+    if (newSkillCategories.length === 0) {
+      setError("At least one skill category is required")
       return
     }
 
@@ -60,7 +72,7 @@ export function DashboardContent() {
     const newSkill: Skill = {
       id: Math.max(...skills.map((s) => s.id)) + 1,
       name: newSkillName.trim(),
-      category: newSkillCategory,
+      categories: newSkillCategories,
       level: 50, // Default level
       icon: "code", // Default icon
       color: "from-[#B97452] to-[#C17E3D]", // Default color
@@ -69,14 +81,14 @@ export function DashboardContent() {
 
     setSkills([...skills, newSkill])
     setNewSkillName("")
-    setNewSkillCategory("")
+    setNewSkillCategories([])
     setIsAddingSkill(false)
   }
 
   const handleCancelAddSkill = () => {
     setIsAddingSkill(false)
     setNewSkillName("")
-    setNewSkillCategory("")
+    setNewSkillCategories([])
     setError("")
   }
 
@@ -110,11 +122,6 @@ export function DashboardContent() {
 
     if (!newProject.description.trim()) {
       setProjectError("Description is required")
-      return
-    }
-
-    if (!newProject.caseStudy.trim()) {
-      setProjectError("Case study is required")
       return
     }
 
@@ -192,6 +199,97 @@ export function DashboardContent() {
     setProjects(projects.filter((project) => project.id !== projectId))
   }
 
+  // Category management functions
+  const handleAddCategory = () => {
+    setCategoryError("")
+
+    if (!newCategoryName.trim()) {
+      setCategoryError("Category name is required")
+      return
+    }
+
+    const trimmedName = newCategoryName.trim()
+
+    if (skillCategories.includes(trimmedName)) {
+      setCategoryError("A category with this name already exists")
+      return
+    }
+
+    setSkillCategories([...skillCategories, trimmedName])
+    setNewCategoryName("")
+  }
+
+  const handleStartEditCategory = (category: string) => {
+    setEditingCategory(category)
+    setEditingCategoryName(category)
+    setCategoryError("")
+  }
+
+  const handleSaveEditCategory = () => {
+    setCategoryError("")
+
+    if (!editingCategoryName.trim()) {
+      setCategoryError("Category name is required")
+      return
+    }
+
+    const trimmedName = editingCategoryName.trim()
+
+    if (trimmedName !== editingCategory && skillCategories.includes(trimmedName)) {
+      setCategoryError("A category with this name already exists")
+      return
+    }
+
+    // Update category name in all skills that use it
+    const updatedSkills = skills.map((skill) => {
+      if (skill.categories.includes(editingCategory!)) {
+        return {
+          ...skill,
+          categories: skill.categories.map((cat) => (cat === editingCategory ? trimmedName : cat)),
+        }
+      }
+      return skill
+    })
+
+    setSkills(updatedSkills)
+
+    // Update categories list
+    setSkillCategories(skillCategories.map((cat) => (cat === editingCategory ? trimmedName : cat)))
+
+    setEditingCategory(null)
+    setEditingCategoryName("")
+  }
+
+  const handleCancelEditCategory = () => {
+    setEditingCategory(null)
+    setEditingCategoryName("")
+    setCategoryError("")
+  }
+
+  const handleRemoveCategory = (categoryToRemove: string) => {
+    // Check if any skills use this category
+    const skillsUsingCategory = skills.filter((skill) => skill.categories.includes(categoryToRemove))
+
+    if (skillsUsingCategory.length > 0) {
+      const skillNames = skillsUsingCategory.map((s) => s.name).join(", ")
+      setCategoryError(
+        `Cannot delete category "${categoryToRemove}" because it is used by the following skills: ${skillNames}. Please remove this category from those skills first.`,
+      )
+      return
+    }
+
+    setSkillCategories(skillCategories.filter((cat) => cat !== categoryToRemove))
+    setCategoryError("")
+  }
+
+  const handleCloseCategoryModal = () => {
+    setIsManagingCategories(false)
+    setNewCategoryName("")
+    setEditingCategory(null)
+    setEditingCategoryName("")
+    setCategoryError("")
+  }
+
   return (
     <div className="space-y-12">
       {/* Skills Section */}
@@ -207,9 +305,22 @@ export function DashboardContent() {
                 <thead>
                   <tr className="border-b border-[#B97452]/30">
                     <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Name</th>
-                    <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Category</th>
+                    <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">
+                      <div className="flex items-center gap-2">
+                        <span>Category</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsManagingCategories(true)}
+                          className="h-6 w-6 p-0 text-[#C17E3D] hover:bg-[#B97452]/20 hover:text-[#C17E3D]"
+                          title="Manage Categories"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Level</th>
-                    <th className="text-right py-3 px-4 text-[#C17E3D] font-semibold">Actions</th>
+                    <th className="text-right py-3 px-1 text-[#C17E3D] font-semibold"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -220,9 +331,13 @@ export function DashboardContent() {
                     >
                       <td className="py-3 px-4 text-[#FAE3C6]">{skill.name}</td>
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className="bg-[#B97452]/20 text-[#C17E3D] border-[#B97452]/30">
-                          {skill.category}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {skill.categories.map((category) => (
+                            <Badge key={category} variant="outline" className="bg-[#B97452]/20 text-[#C17E3D] border-[#B97452]/30">
+                              {category}
+                            </Badge>
+                          ))}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-[#FAE3C6]">{skill.level}%</td>
                       <td className="py-3 px-4 text-right">
@@ -231,7 +346,7 @@ export function DashboardContent() {
                           size="sm"
                           onClick={() => handleRemoveSkill(skill.id)}
                           className={cn(
-                            "text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all duration-200",
+                            "text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all duration-200 cursor-pointer",
                             "md:opacity-0 md:group-hover:opacity-100", // Hide on desktop until hover
                             "opacity-100", // Always visible on mobile
                           )}
@@ -254,18 +369,27 @@ export function DashboardContent() {
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <select
-                          value={newSkillCategory}
-                          onChange={(e) => setNewSkillCategory(e.target.value)}
-                          className="w-full bg-[#030304]/50 border border-[#B97452]/30 rounded-md px-3 py-2 text-[#FAE3C6] text-sm"
-                        >
-                          <option value="">Select category</option>
-                          {skillCategories.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            {skillCategories.map((category) => (
+                              <label key={category} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={newSkillCategories.includes(category)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setNewSkillCategories([...newSkillCategories, category])
+                                    } else {
+                                      setNewSkillCategories(newSkillCategories.filter((c) => c !== category))
+                                    }
+                                  }}
+                                  className="rounded border-[#B97452]/30 bg-[#030304]/50 text-[#C17E3D]"
+                                />
+                                <span className="text-sm text-[#FAE3C6]">{category}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-[#FAE3C6]/50">50%</td>
                       <td className="py-3 px-4 text-right">
@@ -295,7 +419,7 @@ export function DashboardContent() {
                         <Button
                           variant="ghost"
                           onClick={() => setIsAddingSkill(true)}
-                          className="w-full text-[#C17E3D] hover:bg-[#B97452]/20 border-2 border-dashed border-[#B97452]/30 hover:border-[#C17E3D]/50"
+                          className="w-full text-[#C17E3D] hover:bg-[#B97452]/20 border-2 border-dashed border-[#B97452]/30 hover:border-[#C17E3D]/50 cursor-pointer"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Add New Skill
@@ -317,6 +441,146 @@ export function DashboardContent() {
         </CardContent>
       </Card>
 
+      {/* Category Management Modal */}
+      {isManagingCategories && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#222B39] border border-[#B97452]/30 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-[#C17E3D]">Manage Skill Categories</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseCategoryModal}
+                  className="text-[#FAE3C6] hover:bg-[#B97452]/20"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Add New Category */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-[#C17E3D] mb-2">Add New Category</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => {
+                      setNewCategoryName(e.target.value)
+                      setCategoryError("")
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddCategory()
+                      }
+                    }}
+                    placeholder="Category name"
+                    className="bg-[#030304]/50 border-[#B97452]/30 text-[#FAE3C6]"
+                  />
+                  <Button onClick={handleAddCategory} className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6] cursor-pointer">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {categoryError && (
+                <div className="mb-4 bg-red-500/20 border border-red-500/50 rounded-md p-3">
+                  <p className="text-red-400 text-sm">{categoryError}</p>
+                </div>
+              )}
+
+              {/* Categories List */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-[#C17E3D] mb-2">Existing Categories</label>
+                {skillCategories.length === 0 ? (
+                  <p className="text-[#FAE3C6]/60 text-sm">No categories yet. Add one above.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {skillCategories.map((category) => (
+                      <div
+                        key={category}
+                        className="flex items-center gap-2 p-3 bg-[#030304]/50 border border-[#B97452]/30 rounded-md"
+                      >
+                        {editingCategory === category ? (
+                          <>
+                            <Input
+                              value={editingCategoryName}
+                              onChange={(e) => {
+                                setEditingCategoryName(e.target.value)
+                                setCategoryError("")
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleSaveEditCategory()
+                                } else if (e.key === "Escape") {
+                                  handleCancelEditCategory()
+                                }
+                              }}
+                              className="flex-1 bg-[#222B39] border-[#B97452]/30 text-[#FAE3C6]"
+                              autoFocus
+                            />
+                            <Button
+                              onClick={handleSaveEditCategory}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={handleCancelEditCategory}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/20 cursor-pointer"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-[#FAE3C6]">{category}</span>
+                            <Badge variant="outline" className="bg-[#B97452]/20 text-[#C17E3D] border-[#B97452]/30">
+                              {skills.filter((skill) => skill.categories.includes(category)).length} skill
+                              {skills.filter((skill) => skill.categories.includes(category)).length !== 1 ? "s" : ""}
+                            </Badge>
+                            <Button
+                              onClick={() => handleStartEditCategory(category)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-[#C17E3D] hover:bg-[#B97452]/20 cursor-pointer"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleRemoveCategory(category)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/20 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <div className="flex justify-end mt-6 pt-6 border-t border-[#B97452]/30">
+                <Button
+                  onClick={handleCloseCategoryModal}
+                  className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6] cursor-pointer"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Call To Action for New Project */}
       <Card className="bg-gradient-to-r from-[#B97452]/20 to-[#C17E3D]/20 border-[#C17E3D]/50">
         <CardContent className="p-8 text-center">
@@ -326,7 +590,7 @@ export function DashboardContent() {
           </p>
           <Button
             onMouseUp={() => setIsAddingProject(true)}
-            className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6] px-8 py-3 text-lg font-semibold shadow-lg shadow-[#B97452]/30"
+            className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6] px-8 py-3 text-lg font-semibold shadow-lg shadow-[#B97452]/30 cursor-pointer"
           >
             <Plus className="h-5 w-5 mr-2" />
             Create New Project
@@ -530,7 +794,7 @@ What were the outcomes?`}
                   <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Company</th>
                   <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Date</th>
                   <th className="text-left py-3 px-4 text-[#C17E3D] font-semibold">Featured</th>
-                  <th className="text-right py-3 px-4 text-[#C17E3D] font-semibold">Actions</th>
+                  <th className="text-right py-3 px-1 text-[#C17E3D] font-semibold"></th>
                 </tr>
               </thead>
               <tbody>
@@ -547,10 +811,10 @@ What were the outcomes?`}
                     </td>
                     <td className="py-3 px-4 text-[#FAE3C6]">{project.company}</td>
                     <td className="py-3 px-4 text-[#FAE3C6]">
-                      {new Date(project.date).toLocaleDateString("en-US", {
+                      {project.date ? new Date(project.date).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
-                      })}
+                      }) : "-"}
                     </td>
                     <td className="py-3 px-4">
                       {project.featured === 1 ? (
@@ -565,7 +829,7 @@ What were the outcomes?`}
                         size="sm"
                         onClick={() => handleRemoveProject(project.id)}
                         className={cn(
-                          "text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all duration-200",
+                          "text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all duration-200 cursor-pointer",
                           "md:opacity-0 md:group-hover:opacity-100", // Hide on desktop until hover
                           "opacity-100", // Always visible on mobile
                         )}

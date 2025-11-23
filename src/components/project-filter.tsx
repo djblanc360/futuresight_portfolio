@@ -62,15 +62,15 @@ function SkillCard({ skill, isDragging, isInDeck }: SkillCardProps) {
             variant="outline"
             className={cn(
               "text-xs px-1 py-0 border-[#B97452]/30",
-              skill.category === "Frontend" && "bg-[#B97452]/20 text-[#C17E3D]",
-              skill.category === "Backend" && "bg-[#C17E3D]/20 text-[#B97452]",
-              skill.category === "Database" && "bg-[#FAE3C6]/20 text-[#C17E3D]",
-              skill.category === "Cloud & DevOps" && "bg-[#B97452]/30 text-[#FAE3C6]",
-              skill.category === "Testing" && "bg-[#C17E3D]/30 text-[#FAE3C6]",
-              skill.category === "Tools" && "bg-[#FAE3C6]/30 text-[#030304]",
+              skill.categories.includes("Frontend") && "bg-[#B97452]/20 text-[#C17E3D]",
+              skill.categories.includes("Backend") && "bg-[#C17E3D]/20 text-[#B97452]",
+              skill.categories.includes("Database") && "bg-[#FAE3C6]/20 text-[#C17E3D]",
+              skill.categories.includes("Cloud & DevOps") && "bg-[#B97452]/30 text-[#FAE3C6]",
+              skill.categories.includes("Testing") && "bg-[#C17E3D]/30 text-[#FAE3C6]",
+              skill.categories.includes("Tools") && "bg-[#FAE3C6]/30 text-[#030304]",
             )}
           >
-            {skill.category.split(" ")[0]}
+            {skill.categories[0]?.split(" ")[0] || "Skill"}
           </Badge>
         </CardContent>
       </Card>

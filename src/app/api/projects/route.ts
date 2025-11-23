@@ -30,8 +30,13 @@ export async function GET(request: Request) {
       const project = result[0]!.project
       const projectSkills = result
         .filter((row) => row.skill !== null)
-        .map((row) => row.skill)
-        .filter((skill): skill is Skill => skill !== null)
+        .map((row) => {
+          const skill = row.skill!
+          return {
+            ...skill,
+            categories: JSON.parse(skill.categories) as string[],
+          }
+        })
 
       return NextResponse.json({
         ...project,
@@ -65,8 +70,12 @@ export async function GET(request: Request) {
 
         if (row.skill) {
           const project = projectsMap.get(row.project.id)!
-          if (!project.skills.some((s) => s.id === row.skill!.id)) {
-            project.skills.push(row.skill)
+          const skill = {
+            ...row.skill,
+            categories: JSON.parse(row.skill.categories) as string[],
+          }
+          if (!project.skills.some((s) => s.id === skill.id)) {
+            project.skills.push(skill)
           }
         }
       })
@@ -98,8 +107,12 @@ export async function GET(request: Request) {
 
       if (row.skill) {
         const project = projectsMap.get(row.project.id)!
-        if (!project.skills.some((s) => s.id === row.skill!.id)) {
-          project.skills.push(row.skill)
+        const skill = {
+          ...row.skill,
+          categories: JSON.parse(row.skill.categories) as string[],
+        }
+        if (!project.skills.some((s) => s.id === skill.id)) {
+          project.skills.push(skill)
         }
       }
     })

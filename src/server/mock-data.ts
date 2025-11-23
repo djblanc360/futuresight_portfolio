@@ -28,7 +28,7 @@ export const skillsData: Skill[] = [
   {
     id: 1,
     name: "React",
-    category: "Frontend",
+    categories: ["Frontend"],
     level: 90,
     icon: "react",
     color: "from-[#61DAFB] to-[#2D79C7]",
@@ -37,7 +37,7 @@ export const skillsData: Skill[] = [
   {
     id: 2,
     name: "TypeScript",
-    category: "Frontend",
+    categories: ["Frontend", "Backend"],
     level: 85,
     icon: "typescript",
     color: "from-[#3178C6] to-[#235A97]",
@@ -46,7 +46,7 @@ export const skillsData: Skill[] = [
   {
     id: 3,
     name: "Next.js",
-    category: "Frontend",
+    categories: ["Frontend"],
     level: 85,
     icon: "nextjs",
     color: "from-[#000000] to-[#333333]",
@@ -55,7 +55,7 @@ export const skillsData: Skill[] = [
   {
     id: 4,
     name: "Tailwind CSS",
-    category: "Frontend",
+    categories: ["Frontend"],
     level: 90,
     icon: "tailwind",
     color: "from-[#38B2AC] to-[#0694A2]",
@@ -64,7 +64,7 @@ export const skillsData: Skill[] = [
   {
     id: 5,
     name: "Node.js",
-    category: "Backend",
+    categories: ["Backend"],
     level: 85,
     icon: "nodejs",
     color: "from-[#539E43] to-[#2F6B1E]",
@@ -73,7 +73,7 @@ export const skillsData: Skill[] = [
   {
     id: 6,
     name: "Express",
-    category: "Backend",
+    categories: ["Backend"],
     level: 80,
     icon: "express",
     color: "from-[#000000] to-[#333333]",
@@ -82,7 +82,7 @@ export const skillsData: Skill[] = [
   {
     id: 7,
     name: "GraphQL",
-    category: "Backend",
+    categories: ["Backend"],
     level: 75,
     icon: "graphql",
     color: "from-[#E535AB] to-[#B52B88]",
@@ -91,7 +91,7 @@ export const skillsData: Skill[] = [
   {
     id: 8,
     name: "MongoDB",
-    category: "Database",
+    categories: ["Database"],
     level: 80,
     icon: "mongodb",
     color: "from-[#4DB33D] to-[#3F9C35]",
@@ -100,7 +100,7 @@ export const skillsData: Skill[] = [
   {
     id: 9,
     name: "PostgreSQL",
-    category: "Database",
+    categories: ["Database"],
     level: 75,
     icon: "postgresql",
     color: "from-[#336791] to-[#2F5E8D]",
@@ -109,7 +109,7 @@ export const skillsData: Skill[] = [
   {
     id: 10,
     name: "AWS",
-    category: "Cloud & DevOps",
+    categories: ["Cloud & DevOps"],
     level: 70,
     icon: "aws",
     color: "from-[#FF9900] to-[#FF7700]",
@@ -118,7 +118,7 @@ export const skillsData: Skill[] = [
   {
     id: 11,
     name: "Docker",
-    category: "Cloud & DevOps",
+    categories: ["Cloud & DevOps"],
     level: 75,
     icon: "docker",
     color: "from-[#2496ED] to-[#1D70B8]",
@@ -127,7 +127,7 @@ export const skillsData: Skill[] = [
   {
     id: 12,
     name: "Vercel",
-    category: "Cloud & DevOps",
+    categories: ["Cloud & DevOps"],
     level: 85,
     icon: "vercel",
     color: "from-[#000000] to-[#333333]",
@@ -136,7 +136,7 @@ export const skillsData: Skill[] = [
   {
     id: 13,
     name: "Jest",
-    category: "Testing",
+    categories: ["Testing"],
     level: 75,
     icon: "jest",
     color: "from-[#C21325] to-[#99000D]",
@@ -145,7 +145,7 @@ export const skillsData: Skill[] = [
   {
     id: 14,
     name: "Cypress",
-    category: "Testing",
+    categories: ["Testing"],
     level: 70,
     icon: "cypress",
     color: "from-[#17202C] to-[#0A101C]",
@@ -154,7 +154,7 @@ export const skillsData: Skill[] = [
   {
     id: 15,
     name: "Git",
-    category: "Tools",
+    categories: ["Tools"],
     level: 90,
     icon: "git",
     color: "from-[#F05032] to-[#C13928]",
@@ -163,7 +163,7 @@ export const skillsData: Skill[] = [
   {
     id: 16,
     name: "Redux",
-    category: "Tools",
+    categories: ["Tools"],
     level: 80,
     icon: "redux",
     color: "from-[#764ABC] to-[#5E3799]",
@@ -172,7 +172,7 @@ export const skillsData: Skill[] = [
   {
     id: 17,
     name: "Drizzle ORM",
-    category: "Database",
+    categories: ["Database"],
     level: 80,
     icon: "database",
     color: "from-[#C5F74F] to-[#9BC43C]",
@@ -181,7 +181,7 @@ export const skillsData: Skill[] = [
   {
     id: 18,
     name: "Prisma",
-    category: "Database",
+    categories: ["Database"],
     level: 75,
     icon: "database",
     color: "from-[#2D3748] to-[#1A202C]",
@@ -553,10 +553,15 @@ export function getSkillsByCategory(): Record<string, Skill[]> {
   const categories: Record<string, Skill[]> = {}
 
   skillsData.forEach((skill) => {
-    if (!categories[skill.category]) {
-      categories[skill.category] = []
-    }
-    categories[skill.category]!.push(skill)
+    skill.categories.forEach((category) => {
+      if (!categories[category]) {
+        categories[category] = []
+      }
+      // Only add skill once per category (avoid duplicates if skill is in multiple categories)
+      if (!categories[category]!.some((s) => s.id === skill.id)) {
+        categories[category]!.push(skill)
+      }
+    })
   })
 
   return categories
@@ -566,24 +571,24 @@ export function getSkillsByCategory(): Record<string, Skill[]> {
 export function getSkillCategoriesData(): Array<{
   name: string
   color: string
-  skills: Array<{ name: string; level: number; category: string }>
+  skills: Array<{ name: string; level: number; categories: string[] }>
 }> {
   const categories: Array<{
     name: string
     color: string
-    skills: Array<{ name: string; level: number; category: string }>
+    skills: Array<{ name: string; level: number; categories: string[] }>
   }> = []
   
-  // Get unique categories from skills data
-  const uniqueCategories = [...new Set(skillsData.map(skill => skill.category))]
+  // Get unique categories from skills data (flatten all categories from all skills)
+  const uniqueCategories = [...new Set(skillsData.flatMap(skill => skill.categories))]
   
   uniqueCategories.forEach(categoryName => {
     const categorySkills = skillsData
-      .filter(skill => skill.category === categoryName)
+      .filter(skill => skill.categories.includes(categoryName))
       .map(skill => ({
         name: skill.name,
         level: skill.level,
-        category: skill.category
+        categories: skill.categories
       }))
     
     if (categorySkills.length > 0) {
