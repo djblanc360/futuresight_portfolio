@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -195,7 +196,8 @@ export function DashboardContent() {
       .trim()
   }
 
-  const handleRemoveProject = (projectId: number) => {
+  const handleRemoveProject = (projectId: number, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent link navigation
     setProjects(projects.filter((project) => project.id !== projectId))
   }
 
@@ -804,30 +806,40 @@ What were the outcomes?`}
                     className="border-b border-[#B97452]/20 hover:bg-[#B97452]/10 transition-colors group"
                   >
                     <td className="py-3 px-4">
-                      <div>
-                        <div className="text-[#FAE3C6] font-medium">{project.title}</div>
-                        <div className="text-[#FAE3C6]/60 text-sm line-clamp-1">{project.description}</div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-[#FAE3C6]">{project.company}</td>
-                    <td className="py-3 px-4 text-[#FAE3C6]">
-                      {project.date ? new Date(project.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                      }) : "-"}
+                      <Link href={`/projects/${project.slug}`} className="block hover:text-[#C17E3D] transition-colors">
+                        <div>
+                          <div className="text-[#FAE3C6] font-medium">{project.title}</div>
+                          <div className="text-[#FAE3C6]/60 text-sm line-clamp-1">{project.description}</div>
+                        </div>
+                      </Link>
                     </td>
                     <td className="py-3 px-4">
-                      {project.featured === 1 ? (
-                        <Badge className="bg-[#C17E3D]/20 text-[#C17E3D] border-[#C17E3D]/30">Featured</Badge>
-                      ) : (
-                        <span className="text-[#FAE3C6]/50">-</span>
-                      )}
+                      <Link href={`/projects/${project.slug}`} className="block text-[#FAE3C6] hover:text-[#C17E3D] transition-colors">
+                        {project.company}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link href={`/projects/${project.slug}`} className="block text-[#FAE3C6] hover:text-[#C17E3D] transition-colors">
+                        {project.date ? new Date(project.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                        }) : "-"}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link href={`/projects/${project.slug}`} className="block">
+                        {project.featured === 1 ? (
+                          <Badge className="bg-[#C17E3D]/20 text-[#C17E3D] border-[#C17E3D]/30">Featured</Badge>
+                        ) : (
+                          <span className="text-[#FAE3C6]/50">-</span>
+                        )}
+                      </Link>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveProject(project.id)}
+                        onClick={(e) => handleRemoveProject(project.id, e)}
                         className={cn(
                           "text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all duration-200 cursor-pointer",
                           "md:opacity-0 md:group-hover:opacity-100", // Hide on desktop until hover
