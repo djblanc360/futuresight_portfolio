@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Wand2, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, SignOutButton } from '@clerk/nextjs'
 
 export function MagicHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -46,7 +47,20 @@ export function MagicHeader() {
               Contact
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-700 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link href="/dashboard">
+
+            <SignedOut>
+              <SignInButton>
+                <Button
+                  variant="outline"
+                  className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/80 hover:border-[#C17E3D] bg-[#222B39] cursor-pointer"
+                >
+                  Sign In
+                </Button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              {/* <UserButton /> */}
+              <Link href="/dashboard">
               <Button
                 variant="outline"
                 className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/80 hover:border-[#C17E3D] bg-[#222B39] cursor-pointer"
@@ -54,6 +68,15 @@ export function MagicHeader() {
                 Dashboard
               </Button>
             </Link>
+            <SignOutButton>
+              <Button
+                variant="outline"
+                className="border-[#B97452]/50 text-[#C17E3D] hover:bg-[#B97452]/80 hover:border-[#C17E3D] bg-[#222B39] cursor-pointer"
+              >
+                Sign Out
+              </Button>
+            </SignOutButton>
+            </SignedIn>
           </nav>
 
           {/* Mobile Menu Button */}
