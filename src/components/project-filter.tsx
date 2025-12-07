@@ -22,7 +22,6 @@ import { Badge } from "@/components/ui/badge"
 import { ProjectCard } from "@/components/project-card"
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getProjectsWithSkills, skillsData } from "@/server/mock-data"
 import type { Skill } from "@/types/skills"
 import type { ProjectWithSkills } from "@/types/projects"
 
@@ -116,12 +115,41 @@ function DroppableSlot({ id, skill, position }: DroppableSlotProps) {
 
 export function ProjectFilter() {
   const [selectedSkills, setSelectedSkills] = useState<(Skill | null)[]>([null, null, null])
-  const [filteredProjects, setFilteredProjects] = useState<ProjectWithSkills[]>(getProjectsWithSkills())
+  const [filteredProjects, setFilteredProjects] = useState<ProjectWithSkills[]>([])
+  const [allProjects, setAllProjects] = useState<ProjectWithSkills[]>([])
+  const [skillsData, setSkillsData] = useState<Skill[]>([])
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [scrollPosition, setScrollPosition] = useState(0)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const [loading, setLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  // Fetch data on mount
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [projectsRes, skillsRes] = await Promise.all([
+          fetch("/api/projects"),
+          fetch("/api/skills"),
+        ])
+
+        if (projectsRes.ok && skillsRes.ok) {
+          const projects = await projectsRes.json()
+          const skills = await skillsRes.json()
+          setAllProjects(projects)
+          setFilteredProjects(projects)
+          setSkillsData(skills)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -173,18 +201,17 @@ export function ProjectFilter() {
 
   const resetFilter = useCallback(() => {
     setSelectedSkills([null, null, null])
-    setFilteredProjects(getProjectsWithSkills())
-  }, [])
+    setFilteredProjects(allProjects)
+  }, [allProjects])
 
   const filterProjects = useCallback((skills: (Skill | null)[]) => {
     const validSkills = skills.filter((skill): skill is Skill => skill !== null)
 
     if (validSkills.length === 0) {
-      setFilteredProjects(getProjectsWithSkills())
+      setFilteredProjects(allProjects)
       return
     }
 
-    const allProjects = getProjectsWithSkills()
     const filtered = allProjects.filter((project) => {
       return validSkills.every((selectedSkill) =>
         project.skills.some((projectSkill) => projectSkill.id === selectedSkill.id),
@@ -192,7 +219,7 @@ export function ProjectFilter() {
     })
 
     setFilteredProjects(filtered)
-  }, [])
+  }, [allProjects])
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id)
@@ -228,6 +255,14 @@ export function ProjectFilter() {
 
   const activeSkill = activeId ? skillsData.find((skill) => skill.id === activeId) : null
   const selectedSkillCount = selectedSkills.filter(Boolean).length
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-[#FAE3C6]/70">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <DndContext

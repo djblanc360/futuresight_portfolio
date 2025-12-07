@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,13 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, X, Check, Edit2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { skillsData, projectsData } from "@/server/mock-data"
 import type { Skill } from "@/types/skills"
 import type { Project } from "@/types/projects"
 
 export function DashboardContent() {
-  const [skills, setSkills] = useState<Skill[]>(skillsData)
-  const [projects, setProjects] = useState<Project[]>(projectsData)
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [newSkillName, setNewSkillName] = useState("")
   const [newSkillCategories, setNewSkillCategories] = useState<string[]>([])
@@ -35,21 +35,44 @@ export function DashboardContent() {
   })
   const [projectError, setProjectError] = useState("")
 
-  const [skillCategories, setSkillCategories] = useState<string[]>([
-    "Frontend",
-    "Backend",
-    "Database",
-    "Cloud & DevOps",
-    "Testing",
-    "Tools",
-  ])
+  // Extract categories from skills
+  const [skillCategories, setSkillCategories] = useState<string[]>([])
   const [isManagingCategories, setIsManagingCategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [editingCategory, setEditingCategory] = useState<string | null>(null)
   const [editingCategoryName, setEditingCategoryName] = useState("")
   const [categoryError, setCategoryError] = useState("")
 
-  const handleAddSkill = () => {
+  // Fetch data on mount
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [projectsRes, skillsRes] = await Promise.all([
+          fetch("/api/projects"),
+          fetch("/api/skills"),
+        ])
+
+        if (projectsRes.ok && skillsRes.ok) {
+          const projectsData = await projectsRes.json()
+          const skillsData = await skillsRes.json()
+          setProjects(projectsData)
+          setSkills(skillsData)
+          
+          // Extract unique categories from skills
+          const categories = [...new Set(skillsData.flatMap((skill: Skill) => skill.categories))]
+          setSkillCategories(categories)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const handleAddSkill = async () => {
     setError("")
 
     if (!newSkillName.trim()) {
@@ -70,20 +93,39 @@ export function DashboardContent() {
       return
     }
 
-    const newSkill: Skill = {
-      id: Math.max(...skills.map((s) => s.id)) + 1,
-      name: newSkillName.trim(),
-      categories: newSkillCategories,
-      level: 50, // Default level
-      icon: "code", // Default icon
-      color: "from-[#B97452] to-[#C17E3D]", // Default color
-      createdAt: new Date(),
-    }
+    try {
+      const res = await fetch("/api/skills", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newSkillName.trim(),
+          categories: newSkillCategories,
+          level: 50, // Default level
+          icon: "code", // Default icon
+          color: "from-[#B97452] to-[#C17E3D]", // Default color
+        }),
+      })
 
-    setSkills([...skills, newSkill])
-    setNewSkillName("")
-    setNewSkillCategories([])
-    setIsAddingSkill(false)
+      if (res.ok) {
+        const newSkill = await res.json()
+        setSkills([...skills, newSkill])
+        setNewSkillName("")
+        setNewSkillCategories([])
+        setIsAddingSkill(false)
+        
+        // Update categories if new ones were added
+        const updatedCategories = [...new Set([...skillCategories, ...newSkillCategories])]
+        setSkillCategories(updatedCategories)
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        setError(errorData.error || "Failed to create skill")
+      }
+    } catch (error) {
+      setError("Failed to create skill")
+      console.error("Error creating skill:", error)
+    }
   }
 
   const handleCancelAddSkill = () => {
@@ -93,7 +135,10 @@ export function DashboardContent() {
     setError("")
   }
 
-  const handleRemoveSkill = (skillId: number) => {
+  const handleRemoveSkill = async (skillId: number) => {
+    // Note: In a real app, you'd call DELETE /api/skills/:id here
+    // For now, we'll just update the local state
+    // TODO: Implement API endpoint for deleting skills
     setSkills(skills.filter((skill) => skill.id !== skillId))
   }
 
@@ -137,36 +182,50 @@ export function DashboardContent() {
     }
 
     try {
-      const projectToCreate = {
-        ...newProject,
-        title: newProject.title.trim(),
-        slug: newProject.slug.trim(),
-        company: newProject.company.trim(),
-        description: newProject.description.trim(),
-        caseStudy: newProject.caseStudy.trim(),
-        date: new Date(newProject.date),
-        id: Math.max(...projects.map((p) => p.id)) + 1,
-        createdAt: new Date(),
-      }
-
-      setProjects([...projects, projectToCreate])
-
-      // Reset form
-      setNewProject({
-        title: "",
-        slug: "",
-        company: "",
-        date: "",
-        description: "",
-        githubUrl: "",
-        demoUrl: "",
-        imageUrl: "",
-        caseStudy: "",
-        featured: 0,
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: newProject.title.trim(),
+          slug: newProject.slug.trim(),
+          company: newProject.company.trim(),
+          description: newProject.description.trim(),
+          caseStudy: newProject.caseStudy.trim(),
+          date: newProject.date,
+          githubUrl: newProject.githubUrl || undefined,
+          demoUrl: newProject.demoUrl || undefined,
+          imageUrl: newProject.imageUrl || undefined,
+          featured: newProject.featured,
+        }),
       })
-      setIsAddingProject(false)
+
+      if (res.ok) {
+        const projectToCreate = await res.json()
+        setProjects([...projects, projectToCreate])
+
+        // Reset form
+        setNewProject({
+          title: "",
+          slug: "",
+          company: "",
+          date: "",
+          description: "",
+          githubUrl: "",
+          demoUrl: "",
+          imageUrl: "",
+          caseStudy: "",
+          featured: 0,
+        })
+        setIsAddingProject(false)
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        setProjectError(errorData.error || "Failed to create project")
+      }
     } catch (error) {
       setProjectError("Failed to create project")
+      console.error("Error creating project:", error)
     }
   }
 
@@ -196,8 +255,11 @@ export function DashboardContent() {
       .trim()
   }
 
-  const handleRemoveProject = (projectId: number, e: React.MouseEvent) => {
+  const handleRemoveProject = async (projectId: number, e: React.MouseEvent) => {
     e.stopPropagation() // Prevent link navigation
+    // Note: In a real app, you'd call DELETE /api/projects/:id here
+    // For now, we'll just update the local state
+    // TODO: Implement API endpoint for deleting projects
     setProjects(projects.filter((project) => project.id !== projectId))
   }
 
@@ -290,6 +352,14 @@ export function DashboardContent() {
     setEditingCategory(null)
     setEditingCategoryName("")
     setCategoryError("")
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-[#FAE3C6]/70">Loading...</p>
+      </div>
+    )
   }
 
   return (

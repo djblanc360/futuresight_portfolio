@@ -2,12 +2,11 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Sparkles, Code, Database, Cloud, Palette, TestTube, Package } from "lucide-react"
-import type { SkillCategory } from "@/types/skills"
-import { getSkillCategoriesData } from "@/server/mock-data"
+import type { SkillCategory, Skill } from "@/types/skills"
 
 // Icon mapping for categories
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -15,32 +14,96 @@ const categoryIcons: Record<string, React.ReactNode> = {
   "Backend": <Code className="w-5 h-5" />,
   "Database": <Database className="w-5 h-5" />,
   "Cloud & DevOps": <Cloud className="w-5 h-5" />,
+  "Cloud & Devops": <Cloud className="w-5 h-5" />,
   "Testing": <TestTube className="w-5 h-5" />,
   "Tools": <Package className="w-5 h-5" />,
+  "Design": <Palette className="w-5 h-5" />,
+  "Ecommerce": <Package className="w-5 h-5" />,
+}
+
+// Category color configuration
+const skillCategoryConfig: Record<string, { color: string }> = {
+  "Frontend": {
+    color: "from-[#B97452] to-[#C17E3D]"
+  },
+  "Backend": {
+    color: "from-[#C17E3D] to-[#B97452]"
+  },
+  "Cloud & Devops": {
+    color: "from-[#FAE3C6] to-[#C17E3D]"
+  },
+  "Design": {
+    color: "from-[#B97452] to-[#FAE3C6]"
+  },
+  "Ecommerce": {
+    color: "from-[#C17E3D] to-[#B97452]"
+  }
 }
 
 // Helper function to convert data to SkillCategory with icons
-function createSkillCategories(): SkillCategory[] {
-  const categoriesData = getSkillCategoriesData()
+function createSkillCategories(skills: Skill[]): SkillCategory[] {
+  const categories: Record<string, Skill[]> = {}
   
-  return categoriesData.map(categoryData => ({
-    name: categoryData.name,
-    icon: categoryIcons[categoryData.name] || <Code className="w-5 h-5" />,
-    color: categoryData.color,
-    skills: categoryData.skills.map(skill => ({
-      name: skill.name,
-      level: skill.level,
-      categories: skill.categories
-    }))
-  }))
+  skills.forEach((skill) => {
+    skill.categories.forEach((category) => {
+      if (!categories[category]) {
+        categories[category] = []
+      }
+      if (!categories[category]!.some((s) => s.id === skill.id)) {
+        categories[category]!.push(skill)
+      }
+    })
+  })
+  
+  return Object.entries(categories).map(([categoryName, categorySkills]) => {
+    const config = skillCategoryConfig[categoryName] || { color: "from-[#B97452] to-[#C17E3D]" }
+    return {
+      name: categoryName,
+      icon: categoryIcons[categoryName] || <Code className="w-5 h-5" />,
+      color: config.color,
+      skills: categorySkills.map(skill => ({
+        name: skill.name,
+        level: skill.level,
+        categories: skill.categories
+      }))
+    }
+  })
 }
 
 export function MagicalSkillCards() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [loading, setLoading] = useState(true)
   
-  // Get skill categories from mock data
-  const skillCategories = createSkillCategories()
+  useEffect(() => {
+    async function fetchSkills() {
+      try {
+        const res = await fetch("/api/skills")
+        if (res.ok) {
+          const skillsData = await res.json()
+          setSkills(skillsData)
+        }
+      } catch (error) {
+        console.error("Error fetching skills:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchSkills()
+  }, [])
+  
+  // Get skill categories from database
+  const skillCategories = createSkillCategories(skills)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-[#FAE3C6]/70">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

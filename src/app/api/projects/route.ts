@@ -136,24 +136,27 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create new project with generated ID
-    const newProject = {
-      id: Date.now(), // Simple ID generation for demo
-      title: body.title,
-      slug: body.slug,
-      company: body.company,
-      date: new Date(body.date),
-      description: body.description,
-      githubUrl: body.githubUrl ?? null,
-      demoUrl: body.demoUrl ?? null,
-      imageUrl: body.imageUrl ?? null,
-      caseStudy: body.caseStudy,
-      featured: body.featured ?? 0,
-      createdAt: new Date(),
+    // Insert into database
+    const [newProject] = await db
+      .insert(projects)
+      .values({
+        title: body.title,
+        slug: body.slug,
+        company: body.company,
+        date: new Date(body.date),
+        description: body.description,
+        githubUrl: body.githubUrl || null,
+        demoUrl: body.demoUrl || null,
+        imageUrl: body.imageUrl || null,
+        caseStudy: body.caseStudy || "",
+        featured: body.featured ?? 0,
+      })
+      .returning()
+
+    if (!newProject) {
+      return NextResponse.json({ error: "Failed to create project" }, { status: 500 })
     }
 
-    // In a real app, you would insert into the database here
-    // For now, we'll just return the created project
     return NextResponse.json({
       ...newProject,
       skills: [], // New projects start with no skills

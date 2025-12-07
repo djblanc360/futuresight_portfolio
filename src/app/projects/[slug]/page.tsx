@@ -2,11 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-// Database retrieval - commented out for later use
-// import { getProjectBySlug } from "@/src/server/queries"
-
-// Import mock data function instead
-import { getProjectBySlug } from "@/server/mock-data"
+import { getProjectBySlug } from "@/server/queries"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Github, ExternalLink } from "lucide-react"
@@ -22,11 +18,7 @@ interface ProjectPageProps {
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   try {
-    // Database retrieval - commented out for later use
-    // const project = await getProjectBySlug(params.slug)
-
-    // Use mock data instead
-    const project = getProjectBySlug(params.slug)
+    const project = await getProjectBySlug(params.slug)
 
     if (!project) {
       return {
@@ -48,21 +40,14 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  // Database retrieval - commented out for later use
-  // try {
-  //   const project = await getProjectBySlug(params.slug)
-  // } catch (error) {
-  //   notFound()
-  // }
+  try {
+    const project = await getProjectBySlug(params.slug)
 
-  // Use mock data instead
-  const project = getProjectBySlug(params.slug)
+    if (!project) {
+      notFound()
+    }
 
-  if (!project) {
-    notFound()
-  }
-
-  return (
+    return (
     <div className="min-h-screen bg-[#030304] text-[#FAE3C6] font-serif">
       <MagicHeader />
 
@@ -117,10 +102,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <div>
                     <h3 className="text-sm font-medium text-[#FAE3C6]/60">Date</h3>
                     <p className="text-[#FAE3C6]">
-                      {new Date(project.date).toLocaleDateString("en-US", {
+                      {project.date ? new Date(project.date).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
-                      })}
+                      }) : "-"}
                     </p>
                   </div>
 
@@ -154,5 +139,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
       </div>
     </div>
-  )
+    )
+  } catch (error) {
+    console.error("Error fetching project:", error)
+    notFound()
+  }
 }

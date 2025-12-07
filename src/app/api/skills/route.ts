@@ -92,20 +92,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "categories must be a non-empty array" }, { status: 400 })
     }
 
-    // Create new skill with generated ID
-    const newSkill = {
-      id: Date.now(), // Simple ID generation for demo
-      name: body.name,
-      categories: body.categories,
-      level: body.level,
-      icon: body.icon ?? "code",
-      color: body.color ?? "from-[#B97452] to-[#C17E3D]",
-      createdAt: new Date(),
+    // Insert into database
+    const [newSkill] = await db
+      .insert(skills)
+      .values({
+        name: body.name,
+        categories: JSON.stringify(body.categories), // Store as JSON string
+        level: body.level,
+        icon: body.icon ?? null,
+        color: body.color ?? null,
+      })
+      .returning()
+
+    if (!newSkill) {
+      return NextResponse.json({ error: "Failed to create skill" }, { status: 500 })
     }
 
-    // In a real app, you would insert into the database here
-    // For now, we'll just return the created skill
-    return NextResponse.json(newSkill)
+    // Parse categories from JSON for response
+    const skillResponse = {
+      ...newSkill,
+      categories: JSON.parse(newSkill.categories) as string[],
+    }
+
+    return NextResponse.json(skillResponse)
   } catch (error) {
     console.error("Error creating skill:", error)
     return NextResponse.json({ error: "Failed to create skill" }, { status: 500 })
