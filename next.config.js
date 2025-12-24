@@ -11,9 +11,6 @@ const config = {
             hostname: "utfs.io", // uploadathing
         }]
     },
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
     typescript: {
         ignoreBuildErrors: true,
     },
