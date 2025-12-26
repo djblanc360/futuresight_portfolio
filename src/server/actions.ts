@@ -98,6 +98,48 @@ export async function deleteSkill(id: number) {
   return { success: true }
 }
 
+export async function updateProject(
+  id: number,
+  data: Partial<{
+    title: string
+    slug: string
+    company: string
+    description: string
+    caseStudy: string
+    date: string
+    githubUrl: string | null
+    demoUrl: string | null
+    imageUrl: string | null
+    featured: number
+  }>
+) {
+  const updateData: Record<string, unknown> = {}
+  
+  if (data.title !== undefined) updateData.title = data.title
+  if (data.slug !== undefined) updateData.slug = data.slug
+  if (data.company !== undefined) updateData.company = data.company
+  if (data.description !== undefined) updateData.description = data.description
+  if (data.caseStudy !== undefined) updateData.caseStudy = data.caseStudy
+  if (data.date !== undefined) updateData.date = new Date(data.date)
+  if (data.githubUrl !== undefined) updateData.githubUrl = data.githubUrl
+  if (data.demoUrl !== undefined) updateData.demoUrl = data.demoUrl
+  if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl
+  if (data.featured !== undefined) updateData.featured = data.featured
+
+  const [updated] = await db
+    .update(projects)
+    .set(updateData)
+    .where(eq(projects.id, id))
+    .returning()
+
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  revalidatePath("/projects")
+  revalidatePath(`/projects/${updated?.slug}`)
+
+  return updated
+}
+
 export async function renameCategory(oldName: string, newName: string) {
   // Get all skills that have this category
   const allSkills = await db.select().from(skills)
