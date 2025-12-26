@@ -9,16 +9,18 @@ import { ArrowLeft, Github, ExternalLink } from "lucide-react"
 import { MagicHeader } from "@/components/magic-header"
 import { StarryBackground } from "@/components/starry-background"
 import { MDXContent } from "@/components/mdx-content"
+import { SignedIn } from "@clerk/nextjs"
 
-interface ProjectPageProps {
-  params: {
+type ProjectPageProps = {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   try {
-    const project = await getProjectBySlug(params.slug)
+    const { slug } = await params
+    const project = await getProjectBySlug(slug)
 
     if (!project) {
       return {
@@ -41,7 +43,8 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   try {
-    const project = await getProjectBySlug(params.slug)
+    const { slug } = await params
+    const project = await getProjectBySlug(slug)
 
     if (!project) {
       notFound()
@@ -84,7 +87,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 {project.imageUrl && (
                   <div className="mb-6 rounded-lg overflow-hidden">
                     <Image
-                      src={project.imageUrl || "/placeholder.svg"}
+                      src={project.imageUrl || "/images/placeholder.png"}
                       alt={project.title}
                       width={500}
                       height={300}

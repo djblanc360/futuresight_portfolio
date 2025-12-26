@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
   DndContext,
   closestCenter,
@@ -116,40 +117,38 @@ function DroppableSlot({ id, skill, position }: DroppableSlotProps) {
 export function ProjectFilter() {
   const [selectedSkills, setSelectedSkills] = useState<(Skill | null)[]>([null, null, null])
   const [filteredProjects, setFilteredProjects] = useState<ProjectWithSkills[]>([])
-  const [allProjects, setAllProjects] = useState<ProjectWithSkills[]>([])
-  const [skillsData, setSkillsData] = useState<Skill[]>([])
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [scrollPosition, setScrollPosition] = useState(0)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const [loading, setLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Fetch data on mount
+  const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await fetch("/api/projects")
+      if (!res.ok) throw new Error("Failed to fetch projects")
+      return res.json() as Promise<ProjectWithSkills[]>
+    },
+  })
+
+  const { data: skillsData = [], isLoading: skillsLoading } = useQuery({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const res = await fetch("/api/skills")
+      if (!res.ok) throw new Error("Failed to fetch skills")
+      return res.json() as Promise<Skill[]>
+    },
+  })
+
+  const loading = projectsLoading || skillsLoading
+
+  // Initialize filtered projects when data loads
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [projectsRes, skillsRes] = await Promise.all([
-          fetch("/api/projects"),
-          fetch("/api/skills"),
-        ])
-
-        if (projectsRes.ok && skillsRes.ok) {
-          const projects = await projectsRes.json()
-          const skills = await skillsRes.json()
-          setAllProjects(projects)
-          setFilteredProjects(projects)
-          setSkillsData(skills)
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
-      }
+    if (allProjects.length > 0 && filteredProjects.length === 0) {
+      setFilteredProjects(allProjects)
     }
-
-    fetchData()
-  }, [])
+  }, [allProjects, filteredProjects.length])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

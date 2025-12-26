@@ -188,7 +188,7 @@ export const projectsData: Project[] = [
     description: "A full-stack e-commerce platform with magical user experiences and seamless payment integration.",
     githubUrl: "https://github.com/example/enchanted-ecommerce",
     demoUrl: "https://enchanted-ecommerce.example.com",
-    imageUrl: "/images/projects/ecommerce.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Enchanted E-Commerce
 
@@ -232,7 +232,7 @@ The new platform resulted in a 35% increase in mobile conversions and a 25% redu
     description: "An admin dashboard with real-time analytics and interactive data visualization.",
     githubUrl: "https://github.com/example/spellbound-dashboard",
     demoUrl: "https://spellbound-dashboard.example.com",
-    imageUrl: "/images/projects/dashboard.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Spellbound Dashboard
 
@@ -275,7 +275,7 @@ The dashboard has become an essential tool for the client's decision-making proc
     description: "A real-time chat application with end-to-end encryption and magical animations.",
     githubUrl: "https://github.com/example/mystic-messenger",
     demoUrl: "https://mystic-messenger.example.com",
-    imageUrl: "/images/projects/messenger.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Mystic Messenger
 
@@ -318,7 +318,7 @@ The application has gained a dedicated user base who appreciate both the securit
     description: "A RESTful API service with comprehensive documentation and robust authentication.",
     githubUrl: "https://github.com/example/arcane-api",
     demoUrl: "https://arcane-api.example.com",
-    imageUrl: "/images/projects/api.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Arcane API
 
@@ -361,7 +361,7 @@ The API now serves as the foundation for 5 different client applications, reduci
     description: "A content management system with markdown support and SEO optimization.",
     githubUrl: "https://github.com/example/divination-blog",
     demoUrl: "https://divination-blog.example.com",
-    imageUrl: "/images/projects/blog.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Divination Blog
 
@@ -404,7 +404,7 @@ The blog saw a 75% increase in organic search traffic within three months of lau
     description: "A custom language compiler that translates magical incantations into executable code.",
     githubUrl: "https://github.com/example/crystal-compiler",
     demoUrl: "https://crystal-compiler.example.com",
-    imageUrl: "/images/projects/compiler.jpg",
+    imageUrl: "/images/placeholder.png",
     caseStudy: `
 # Crystal Compiler
 
