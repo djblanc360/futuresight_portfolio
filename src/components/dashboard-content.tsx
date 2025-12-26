@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,18 +11,85 @@ import { Plus, Trash2, X, Check, Edit2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Skill } from "@/types/skills"
 import type { Project } from "@/types/projects"
+import { createProject, deleteProject, createSkill, deleteSkill, renameCategory } from "@/server/actions"
 
 export function DashboardContent() {
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await fetch("/api/projects")
+      if (!res.ok) throw new Error("Failed to fetch projects")
+      return res.json() as Promise<Project[]>
+    },
+  })
+
+  const { data: skills = [], isLoading: skillsLoading } = useQuery({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const res = await fetch("/api/skills")
+      if (!res.ok) throw new Error("Failed to fetch skills")
+      return res.json() as Promise<Skill[]>
+    },
+  })
+
+  const createProjectMutation = useMutation({
+    mutationFn: createProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] })
+    },
+  })
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: deleteProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] })
+    },
+  })
+
+  const createSkillMutation = useMutation({
+    mutationFn: createSkill,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] })
+    },
+  })
+
+  const deleteSkillMutation = useMutation({
+    mutationFn: deleteSkill,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] })
+    },
+  })
+
+  const renameCategoryMutation = useMutation({
+    mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) =>
+      renameCategory(oldName, newName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] })
+    },
+  })
+
+  const loading = projectsLoading || skillsLoading
+
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [newSkillName, setNewSkillName] = useState("")
   const [newSkillCategories, setNewSkillCategories] = useState<string[]>([])
   const [error, setError] = useState("")
 
   const [isAddingProject, setIsAddingProject] = useState(false)
-  const [newProject, setNewProject] = useState({
+  const [newProject, setNewProject] = useState<{
+    title: string
+    slug: string
+    company: string
+    date: string
+    description: string
+    githubUrl?: string
+    demoUrl?: string
+    imageUrl?: string
+    caseStudy: string
+    featured: number
+  }>({
     title: "",
     slug: "",
     company: "",
@@ -36,41 +104,19 @@ export function DashboardContent() {
   const [projectError, setProjectError] = useState("")
 
   // Extract categories from skills
-  const [skillCategories, setSkillCategories] = useState<string[]>([])
+  const skillCategories: string[] = Array.isArray(skills)
+    ? [...new Set((skills as Skill[]).flatMap((skill: Skill) => skill.categories))]
+    : []
+
+  const [localSkillCategories, setLocalSkillCategories] = useState<string[]>([])
   const [isManagingCategories, setIsManagingCategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [editingCategory, setEditingCategory] = useState<string | null>(null)
   const [editingCategoryName, setEditingCategoryName] = useState("")
   const [categoryError, setCategoryError] = useState("")
 
-  // Fetch data on mount
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [projectsRes, skillsRes] = await Promise.all([
-          fetch("/api/projects"),
-          fetch("/api/skills"),
-        ])
-
-        if (projectsRes.ok && skillsRes.ok) {
-          const projectsData = await projectsRes.json()
-          const skillsData = await skillsRes.json()
-          setProjects(projectsData)
-          setSkills(skillsData)
-          
-          // Extract unique categories from skills
-          const categories = [...new Set(skillsData.flatMap((skill: Skill) => skill.categories))]
-          setSkillCategories(categories)
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
+  // Sync local categories with fetched skills
+  const allCategories: string[] = [...new Set([...skillCategories, ...localSkillCategories])]
 
   const handleAddSkill = async () => {
     setError("")
@@ -86,7 +132,9 @@ export function DashboardContent() {
     }
 
     // Check for duplicate skill names (case insensitive)
-    const isDuplicate = skills.some((skill) => skill.name.toLowerCase() === newSkillName.trim().toLowerCase())
+    const isDuplicate = Array.isArray(skills) && skills.some(
+      (skill) => skill.name.toLowerCase() === newSkillName.trim().toLowerCase()
+    )
 
     if (isDuplicate) {
       setError("A skill with this name already exists")
@@ -94,36 +142,23 @@ export function DashboardContent() {
     }
 
     try {
-      const res = await fetch("/api/skills", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newSkillName.trim(),
-          categories: newSkillCategories,
-          level: 50, // Default level
-          icon: "code", // Default icon
-          color: "from-[#B97452] to-[#C17E3D]", // Default color
-        }),
+      await createSkillMutation.mutateAsync({
+        name: newSkillName.trim(),
+        categories: newSkillCategories,
+        level: 50, // Default level
+        icon: "code", // Default icon
+        color: "from-[#B97452] to-[#C17E3D]", // Default color
       })
 
-      if (res.ok) {
-        const newSkill = await res.json()
-        setSkills([...skills, newSkill])
-        setNewSkillName("")
-        setNewSkillCategories([])
-        setIsAddingSkill(false)
-        
-        // Update categories if new ones were added
-        const updatedCategories = [...new Set([...skillCategories, ...newSkillCategories])]
-        setSkillCategories(updatedCategories)
-      } else {
-        const errorData = await res.json().catch(() => ({}))
-        setError(errorData.error || "Failed to create skill")
-      }
-    } catch (error) {
-      setError("Failed to create skill")
+      setNewSkillName("")
+      setNewSkillCategories([])
+      setIsAddingSkill(false)
+      
+      // Update local categories if new ones were added
+      setLocalSkillCategories((prev) => [...new Set([...prev, ...newSkillCategories])])
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || "Failed to create skill")
       console.error("Error creating skill:", error)
     }
   }
@@ -136,10 +171,11 @@ export function DashboardContent() {
   }
 
   const handleRemoveSkill = async (skillId: number) => {
-    // Note: In a real app, you'd call DELETE /api/skills/:id here
-    // For now, we'll just update the local state
-    // TODO: Implement API endpoint for deleting skills
-    setSkills(skills.filter((skill) => skill.id !== skillId))
+    try {
+      await deleteSkillMutation.mutateAsync(skillId)
+    } catch (error) {
+      console.error("Error deleting skill:", error)
+    }
   }
 
   const handleAddProject = async () => {
@@ -172,7 +208,7 @@ export function DashboardContent() {
     }
 
     // Check for duplicate slug (case insensitive)
-    const isDuplicateSlug = projects.some(
+    const isDuplicateSlug = Array.isArray(projects) && projects.some(
       (project) => project.slug.toLowerCase() === newProject.slug.trim().toLowerCase(),
     )
 
@@ -182,49 +218,36 @@ export function DashboardContent() {
     }
 
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: newProject.title.trim(),
-          slug: newProject.slug.trim(),
-          company: newProject.company.trim(),
-          description: newProject.description.trim(),
-          caseStudy: newProject.caseStudy.trim(),
-          date: newProject.date,
-          githubUrl: newProject.githubUrl || undefined,
-          demoUrl: newProject.demoUrl || undefined,
-          imageUrl: newProject.imageUrl || undefined,
-          featured: newProject.featured,
-        }),
+      await createProjectMutation.mutateAsync({
+        title: newProject.title.trim(),
+        slug: newProject.slug.trim(),
+        company: newProject.company.trim(),
+        description: newProject.description.trim(),
+        caseStudy: newProject.caseStudy.trim(),
+        date: newProject.date,
+        githubUrl: newProject.githubUrl?.trim() || undefined,
+        demoUrl: newProject.demoUrl?.trim() || undefined,
+        imageUrl: newProject.imageUrl?.trim() || undefined,
+        featured: newProject.featured,
       })
 
-      if (res.ok) {
-        const projectToCreate = await res.json()
-        setProjects([...projects, projectToCreate])
-
-        // Reset form
-        setNewProject({
-          title: "",
-          slug: "",
-          company: "",
-          date: "",
-          description: "",
-          githubUrl: "",
-          demoUrl: "",
-          imageUrl: "",
-          caseStudy: "",
-          featured: 0,
-        })
-        setIsAddingProject(false)
-      } else {
-        const errorData = await res.json().catch(() => ({}))
-        setProjectError(errorData.error || "Failed to create project")
-      }
-    } catch (error) {
-      setProjectError("Failed to create project")
+      // Reset form
+      setNewProject({
+        title: "",
+        slug: "",
+        company: "",
+        date: "",
+        description: "",
+        githubUrl: "",
+        demoUrl: "",
+        imageUrl: "",
+        caseStudy: "",
+        featured: 0,
+      })
+      setIsAddingProject(false)
+    } catch (err) {
+      const error = err as Error
+      setProjectError(error.message || "Failed to create project")
       console.error("Error creating project:", error)
     }
   }
@@ -257,10 +280,11 @@ export function DashboardContent() {
 
   const handleRemoveProject = async (projectId: number, e: React.MouseEvent) => {
     e.stopPropagation() // Prevent link navigation
-    // Note: In a real app, you'd call DELETE /api/projects/:id here
-    // For now, we'll just update the local state
-    // TODO: Implement API endpoint for deleting projects
-    setProjects(projects.filter((project) => project.id !== projectId))
+    try {
+      await deleteProjectMutation.mutateAsync(projectId)
+    } catch (error) {
+      console.error("Error deleting project:", error)
+    }
   }
 
   // Category management functions
@@ -274,12 +298,12 @@ export function DashboardContent() {
 
     const trimmedName = newCategoryName.trim()
 
-    if (skillCategories.includes(trimmedName)) {
+    if (allCategories.includes(trimmedName)) {
       setCategoryError("A category with this name already exists")
       return
     }
 
-    setSkillCategories([...skillCategories, trimmedName])
+    setLocalSkillCategories([...localSkillCategories, trimmedName])
     setNewCategoryName("")
   }
 
@@ -289,7 +313,7 @@ export function DashboardContent() {
     setCategoryError("")
   }
 
-  const handleSaveEditCategory = () => {
+  const handleSaveEditCategory = async () => {
     setCategoryError("")
 
     if (!editingCategoryName.trim()) {
@@ -299,26 +323,34 @@ export function DashboardContent() {
 
     const trimmedName = editingCategoryName.trim()
 
-    if (trimmedName !== editingCategory && skillCategories.includes(trimmedName)) {
+    if (trimmedName !== editingCategory && allCategories.includes(trimmedName)) {
       setCategoryError("A category with this name already exists")
       return
     }
 
-    // Update category name in all skills that use it
-    const updatedSkills = skills.map((skill) => {
-      if (skill.categories.includes(editingCategory!)) {
-        return {
-          ...skill,
-          categories: skill.categories.map((cat) => (cat === editingCategory ? trimmedName : cat)),
-        }
+    // Check if this category is used by any skills in the database
+    const skillsUsingCategory = Array.isArray(skills)
+      ? skills.filter((skill) => skill.categories.includes(editingCategory!))
+      : []
+
+    if (skillsUsingCategory.length > 0) {
+      // Update the category name in all skills via server action
+      try {
+        await renameCategoryMutation.mutateAsync({
+          oldName: editingCategory!,
+          newName: trimmedName,
+        })
+      } catch (err) {
+        const error = err as Error
+        setCategoryError(error.message || "Failed to rename category")
+        return
       }
-      return skill
-    })
+    }
 
-    setSkills(updatedSkills)
-
-    // Update categories list
-    setSkillCategories(skillCategories.map((cat) => (cat === editingCategory ? trimmedName : cat)))
+    // update local categories (for categories not yet assigned to skills)
+    setLocalSkillCategories(
+      localSkillCategories.map((cat) => (cat === editingCategory ? trimmedName : cat))
+    )
 
     setEditingCategory(null)
     setEditingCategoryName("")
@@ -332,7 +364,9 @@ export function DashboardContent() {
 
   const handleRemoveCategory = (categoryToRemove: string) => {
     // Check if any skills use this category
-    const skillsUsingCategory = skills.filter((skill) => skill.categories.includes(categoryToRemove))
+    const skillsUsingCategory = Array.isArray(skills)
+      ? skills.filter((skill) => skill.categories.includes(categoryToRemove))
+      : []
 
     if (skillsUsingCategory.length > 0) {
       const skillNames = skillsUsingCategory.map((s) => s.name).join(", ")
@@ -342,7 +376,7 @@ export function DashboardContent() {
       return
     }
 
-    setSkillCategories(skillCategories.filter((cat) => cat !== categoryToRemove))
+    setLocalSkillCategories(localSkillCategories.filter((cat) => cat !== categoryToRemove))
     setCategoryError("")
   }
 
@@ -396,7 +430,7 @@ export function DashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {skills.map((skill) => (
+                  {(Array.isArray(skills) ? skills : []).map((skill: Skill) => (
                     <tr
                       key={skill.id}
                       className="border-b border-[#B97452]/20 hover:bg-[#B97452]/10 transition-colors group"
@@ -404,7 +438,7 @@ export function DashboardContent() {
                       <td className="py-3 px-4 text-[#FAE3C6]">{skill.name}</td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
-                          {skill.categories.map((category) => (
+                          {skill.categories.map((category: string) => (
                             <Badge key={category} variant="outline" className="bg-[#B97452]/20 text-[#C17E3D] border-[#B97452]/30">
                               {category}
                             </Badge>
@@ -443,7 +477,7 @@ export function DashboardContent() {
                       <td className="py-3 px-4">
                         <div className="space-y-2">
                           <div className="flex flex-wrap gap-2">
-                            {skillCategories.map((category) => (
+                            {allCategories.map((category: string) => (
                               <label key={category} className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                   type="checkbox"
@@ -565,11 +599,11 @@ export function DashboardContent() {
               {/* Categories List */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-[#C17E3D] mb-2">Existing Categories</label>
-                {skillCategories.length === 0 ? (
+                {allCategories.length === 0 ? (
                   <p className="text-[#FAE3C6]/60 text-sm">No categories yet. Add one above.</p>
                 ) : (
                   <div className="space-y-2">
-                    {skillCategories.map((category) => (
+                    {allCategories.map((category: string) => (
                       <div
                         key={category}
                         className="flex items-center gap-2 p-3 bg-[#030304]/50 border border-[#B97452]/30 rounded-md"
@@ -612,8 +646,8 @@ export function DashboardContent() {
                           <>
                             <span className="flex-1 text-[#FAE3C6]">{category}</span>
                             <Badge variant="outline" className="bg-[#B97452]/20 text-[#C17E3D] border-[#B97452]/30">
-                              {skills.filter((skill) => skill.categories.includes(category)).length} skill
-                              {skills.filter((skill) => skill.categories.includes(category)).length !== 1 ? "s" : ""}
+                              {Array.isArray(skills) ? skills.filter((skill) => skill.categories.includes(category)).length : 0} skill
+                              {Array.isArray(skills) && skills.filter((skill) => skill.categories.includes(category)).length !== 1 ? "s" : ""}
                             </Badge>
                             <Button
                               onClick={() => handleStartEditCategory(category)}
@@ -870,7 +904,7 @@ What were the outcomes?`}
                 </tr>
               </thead>
               <tbody>
-                {projects.map((project) => (
+                {(Array.isArray(projects) ? projects : []).map((project: Project) => (
                   <tr
                     key={project.id}
                     className="border-b border-[#B97452]/20 hover:bg-[#B97452]/10 transition-colors group"

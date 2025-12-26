@@ -255,11 +255,91 @@ await seed()
 
 ---
 
-## 5. Query Patterns
+## 5. Data Fetching Architecture
 
-### Direct Database Queries (API Routes)
+This project uses a hybrid approach for data fetching:
 
-Used in `src/app/api/projects/route.ts` and `src/app/api/skills/route.ts`:
+### 5.1 Server-Side (React Server Components)
+
+**Location**: `src/server/queries.ts`
+
+Used for initial page loads and SEO. These functions use Next.js's `cache()` and `fetch()` with revalidation:
+
+```typescript
+export const getProjects = cache(async (): Promise<ProjectWithSkills[]> => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/projects`, {
+    next: { revalidate: 3600 }, // Cache for 1 hour
+  })
+  return res.json()
+})
+```
+
+**Use cases**:
+- Server-side rendering (SSR)
+- Static site generation (SSG)
+- Initial page data
+- SEO-critical content
+
+### 5.2 Client-Side (TanStack Query)
+
+**Location**: `src/hooks/use-projects.ts` and `src/hooks/use-skills.ts`
+
+Used for client-side data fetching, mutations, and real-time updates. TanStack Query provides:
+- Automatic caching
+- Background refetching
+- Optimistic updates
+- Request deduplication
+- Retry logic
+
+#### Query Hooks
+
+```typescript
+// Fetch projects
+const { data: projects, isLoading, error } = useProjects()
+
+// Fetch featured projects
+const { data: featuredProjects } = useProjects(true)
+
+// Fetch skills
+const { data: skills } = useSkills()
+```
+
+#### Mutation Hooks
+
+```typescript
+// Create project
+const createProject = useCreateProject()
+await createProject.mutateAsync({
+  title: "New Project",
+  slug: "new-project",
+  // ... other fields
+})
+
+// Create skill
+const createSkill = useCreateSkill()
+await createSkill.mutateAsync({
+  name: "TypeScript",
+  categories: ["Frontend"],
+  level: 85,
+})
+
+// Delete operations
+const deleteProject = useDeleteProject()
+await deleteProject.mutateAsync(projectId)
+```
+
+**Benefits**:
+- Automatic cache invalidation after mutations
+- Loading and error states built-in
+- Prevents duplicate requests
+- Background refetching
+- Stale-while-revalidate pattern
+
+### 5.3 Direct Database Queries (API Routes)
+
+**Location**: `src/app/api/projects/route.ts` and `src/app/api/skills/route.ts`
+
+API routes handle direct database operations using Drizzle ORM:
 
 ```typescript
 // Simple select
@@ -286,23 +366,72 @@ const [newProject] = await db
 await db.delete(projectsToSkills)
 ```
 
-### Cached Queries (Server Components)
+### 5.4 TanStack Query Configuration
 
-Used in `src/server/queries.ts`:
+**Location**: `src/lib/providers.tsx`
+
+Global configuration for TanStack Query:
 
 ```typescript
-export const getProjects = cache(async (): Promise<ProjectWithSkills[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/projects`, {
-    next: { revalidate: 3600 }, // Cache for 1 hour
-  })
-  return res.json()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      gcTime: 5 * 60 * 1000, // 5 minutes (garbage collection)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
 })
 ```
 
-**Note**: The current implementation uses API routes for queries, which is good for:
-- Caching
-- Edge runtime compatibility
-- Separation of concerns
+### 5.5 React Server Actions
+
+**Location**: `src/server/actions.ts`
+
+Mutations (create/update/delete) are handled by React Server Actions:
+
+```typescript
+"use server"
+
+import { eq } from "drizzle-orm"
+import { db } from "./db"
+import { projects, skills } from "./db/schema"
+import { revalidatePath } from "next/cache"
+
+export async function createProject(projectData: {...}) {
+  const [newProject] = await db.insert(projects).values({...}).returning()
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  return newProject
+}
+
+export async function deleteProject(id: number) {
+  await db.delete(projects).where(eq(projects.id, id))
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  return { success: true }
+}
+```
+
+Use with TanStack Query `useMutation`:
+
+```typescript
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { createProject } from "@/server/actions"
+
+const queryClient = useQueryClient()
+
+const mutation = useMutation({
+  mutationFn: createProject,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["projects"] })
+  },
+})
+```
 
 ---
 
@@ -393,6 +522,71 @@ db.select()
 - **Relations**: Define relationships for type inference and query helpers
 - **Joins**: Explicitly join tables in queries (what you actually use in API routes)
 
+### When to Use Each Data Fetching Method
+
+| Method | Use Case | Example |
+|--------|----------|---------|
+| **Server Queries** (`src/server/queries.ts`) | Initial page load, SSR, SSG | Homepage project list |
+| **TanStack Query Hooks** (`src/hooks/*`) | Client components, interactive UI | Dashboard, forms, real-time updates |
+| **Direct DB Queries** (`src/app/api/*/route.ts`) | API endpoints, backend logic | Create/update/delete operations |
+
+---
+
+## 10. Example Usage
+
+### Server Component (SSR)
+
+```typescript
+// app/page.tsx
+import { getFeaturedProjects } from "@/server/queries"
+
+export default async function HomePage() {
+  const projects = await getFeaturedProjects()
+  return <ProjectList projects={projects} />
+}
+```
+
+### Client Component (Interactive)
+
+Following the [TanStack Query Quick Start](https://tanstack.com/query/latest/docs/framework/react/quick-start) pattern:
+
+```typescript
+// components/dashboard.tsx
+"use client"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { createProject } from "@/server/actions"
+import type { Project } from "@/types/projects"
+
+export function Dashboard() {
+  const queryClient = useQueryClient()
+
+  // Query - direct usage
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await fetch("/api/projects")
+      if (!res.ok) throw new Error("Failed to fetch")
+      return res.json() as Promise<Project[]>
+    },
+  })
+
+  // Mutation with server action
+  const mutation = useMutation({
+    mutationFn: createProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] })
+    },
+  })
+
+  const handleCreate = async (data) => {
+    await mutation.mutateAsync(data)
+  }
+
+  if (isLoading) return <div>Loading...</div>
+  return <div>{/* ... */}</div>
+}
+```
+
 ---
 
 ## Summary
@@ -401,7 +595,14 @@ db.select()
 2. **Schema**: `src/server/db/schema.ts` defines tables and relations
 3. **Initialize**: Run `pnpm db:push` to create tables
 4. **Seed**: Call `/api/seed` endpoint to populate data
-5. **Query**: Use `db` instance in API routes for database operations
+5. **Server Queries**: Use `src/server/queries.ts` for RSC data fetching
+6. **Server Actions**: Use `src/server/actions.ts` for mutations
+7. **Client Queries**: Use `useQuery`/`useMutation` directly in components
 
-The implementation follows best practices for Next.js serverless environments with type-safe database operations.
+The implementation follows best practices for Next.js with:
+- Type-safe database operations (Drizzle ORM)
+- Server-side rendering (React Server Components)
+- React Server Actions for mutations
+- TanStack Query for client-side caching
+- Automatic cache invalidation via `queryClient.invalidateQueries()`
 

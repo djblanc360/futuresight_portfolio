@@ -69,7 +69,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('/images/magical-bg.png')] opacity-5 bg-repeat"></div>
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-[#C17E3D] mb-4">Send an Owl</h2>
+            <h2 className="text-3xl md:text-5xl font-bold text-[#C17E3D] mb-4">Share Your Vision</h2>
             <p className="text-[#FAE3C6]/70 max-w-2xl mx-auto">
               Having visions of a future project? Let&apos;s collaborate and bring it to life.
             </p>
@@ -91,22 +91,22 @@ export default function Home() {
 
               <div className="flex justify-center gap-4">
                 <Link
-                  href="https://github.com"
-                  className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors"
+                    href="https://github.com/djblanc360"
+                    className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors cursor-pointer"
                 >
                   <Github className="h-6 w-6 text-[#C17E3D]" />
                   <span className="sr-only">GitHub</span>
                 </Link>
                 <Link
-                  href="https://linkedin.com"
-                  className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors"
+                  href="https://www.linkedin.com/in/daryl-blancaflor"
+                  className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors cursor-pointer"
                 >
                   <Linkedin className="h-6 w-6 text-[#C17E3D]" />
                   <span className="sr-only">LinkedIn</span>
                 </Link>
                 <Link
-                  href="mailto:example@example.com"
-                  className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors"
+                  href="mailto:djblanc360@gmail.com"
+                  className="p-3 bg-[#222B39] rounded-full border border-[#B97452]/30 hover:border-[#C17E3D] transition-colors cursor-pointer"
                 >
                   <Mail className="h-6 w-6 text-[#C17E3D]" />
                   <span className="sr-only">Email</span>

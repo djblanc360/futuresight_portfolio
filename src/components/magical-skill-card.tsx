@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Sparkles, Code, Database, Cloud, Palette, TestTube, Package } from "lucide-react"
@@ -73,29 +74,18 @@ function createSkillCategories(skills: Skill[]): SkillCategory[] {
 export function MagicalSkillCards() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [loading, setLoading] = useState(true)
   
-  useEffect(() => {
-    async function fetchSkills() {
-      try {
-        const res = await fetch("/api/skills")
-        if (res.ok) {
-          const skillsData = await res.json()
-          setSkills(skillsData)
-        }
-      } catch (error) {
-        console.error("Error fetching skills:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    fetchSkills()
-  }, [])
+  const { data: skills = [], isLoading: loading } = useQuery({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const res = await fetch("/api/skills")
+      if (!res.ok) throw new Error("Failed to fetch skills")
+      return res.json() as Promise<Skill[]>
+    },
+  })
   
   // Get skill categories from database
-  const skillCategories = createSkillCategories(skills)
+  const skillCategories = createSkillCategories(Array.isArray(skills) ? skills : [])
 
   if (loading) {
     return (

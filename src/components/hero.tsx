@@ -17,7 +17,7 @@ export function Hero() {
                             <span className="block mt-2">Magic with Code</span>
                         </h1>
                         <p className="text-xl text-[#FAE3C6]/80 max-w-xl mx-auto lg:mx-0">
-                            Fullstack developer conjuring elegant solutions through the art of programming. Transforming ideas
+                            Fullstack developer conjuring elegant solutions. <br />Transforming ideas
                             into digital reality.
                         </p>
                         <div className="flex flex-wrap gap-4 justify-center lg:justify-start">

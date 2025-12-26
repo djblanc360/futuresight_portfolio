@@ -1,5 +1,5 @@
 import { cache } from "react"
-import type { ProjectWithSkills, SkillWithProjects, Project, Skill } from "./db/schema"
+import type { ProjectWithSkills, SkillWithProjects } from "./db/schema"
 
 // Cached data fetching functions for use in React Server Components
 export const getProjects = cache(async (): Promise<ProjectWithSkills[]> => {
@@ -103,50 +103,3 @@ export const getSkillsByCategory = cache(async (): Promise<Record<string, SkillW
     throw error
   }
 })
-
-// POST request functions for creating new data
-export const createProject = async (projectData: Omit<Project, "id" | "createdAt">): Promise<ProjectWithSkills> => {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/projects`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(projectData),
-    })
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to create project: ${res.status} ${res.statusText}`)
-    }
-
-    return res.json()
-  } catch (error) {
-    console.error("Error in createProject:", error)
-    throw error
-  }
-}
-
-export const createSkill = async (skillData: Omit<Skill, "id" | "createdAt">): Promise<Skill> => {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/skills`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(skillData),
-    })
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to create skill: ${res.status} ${res.statusText}`)
-    }
-
-    return res.json()
-  } catch (error) {
-    console.error("Error in createSkill:", error)
-    throw error
-  }
-}

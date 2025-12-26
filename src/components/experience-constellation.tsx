@@ -18,40 +18,40 @@ interface Experience {
 const experiences: Experience[] = [
   {
     id: "1",
-    company: "Arcane Technologies",
-    role: "Senior Fullstack Developer",
-    year: "2020 - Present",
+    company: "Good 02 Studios",
+    role: "Full Stack Developer",
+    year: "2025 - Present",
     description:
-      "Crafting enchanted web applications and leading a team of magical developers. Specializing in React, Node.js, and cloud architecture.",
+      "Responsible for creating, improving and maintaining entire technical stack. Evaluates new technology and services for determining implementation. Ensures systems are secure, scalable and GDPR compliant.",
     x: 70,
     y: 20,
   },
   {
     id: "2",
-    company: "Mystic Web Solutions",
-    role: "Frontend Developer",
-    year: "2018 - 2020",
+    company: "Starshot Ventures",
+    role: "Shopify Consultant",
+    year: "2024 - 2025",
     description:
-      "Conjuring responsive interfaces and optimizing user experiences. Focused on React, TypeScript, and modern CSS frameworks.",
+      "Served as the sole developer and an advisory role for five brands, implementing features and third-party integrations, as well as conducting product research and UX audits.",
     x: 30,
     y: 35,
   },
   {
     id: "3",
-    company: "Enchanted Systems Inc.",
-    role: "Backend Developer",
-    year: "2016 - 2018",
-    description: "Brewing powerful APIs and database solutions. Worked with Node.js, Express, MongoDB, and PostgreSQL.",
+    company: "Archipelago Companies",
+    role: "Frontend Developer",
+    year: "2022 - 2024",
+    description: "Built and documented reusable integrations and middlewares. Maintained and developed Shopify stores the company's several brands.",
     x: 65,
     y: 60,
   },
   {
     id: "4",
-    company: "Academy of Digital Arts",
-    role: "Computer Science Degree",
-    year: "2014 - 2016",
+    company: "Bryt Designs",
+    role: "Full Stack Developer",
+    year: "2018 - 2022",
     description:
-      "Studied the ancient scrolls of algorithms and data structures. Graduated with honors in Software Engineering.",
+      "Developed and maintained private backend applications to augment Shopify's frontend capabilities.",
     x: 25,
     y: 75,
   },
@@ -62,6 +62,17 @@ export function ExperienceConstellation() {
   const [isZoomed, setIsZoomed] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [stars, setStars] = useState<Array<{ left: string; top: string; delay: string }>>([])
+
+  useEffect(() => {
+    // Generate stars only on client side after hydration
+    const starPositions = Array.from({ length: 50 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 3}s`,
+    }))
+    setStars(starPositions)
+  }, [])
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -106,14 +117,14 @@ export function ExperienceConstellation() {
     <div ref={containerRef} className="relative w-full h-[600px] overflow-hidden rounded-lg">
       {/* Background stars */}
       <div className="absolute inset-0 bg-[#030304]/50 rounded-lg">
-        {Array.from({ length: 50 }).map((_, i) => (
+        {stars.map((star, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-[#FAE3C6]/30 rounded-full animate-pulse"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
+              left: star.left,
+              top: star.top,
+              animationDelay: star.delay,
             }}
           />
         ))}

@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { ClerkProvider } from '@clerk/nextjs'
+import { Providers } from "@/lib/providers";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable}`}>
       <body>
         <ClerkProvider>
-          {children}
+          <Providers>
+            {children}
+          </Providers>
         </ClerkProvider>
       </body>
     </html>
