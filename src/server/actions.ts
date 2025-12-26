@@ -1,6 +1,6 @@
 "use server"
 
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import { db } from "./db"
 import { projects, skills, projectsToSkills } from "./db/schema"
 import { revalidatePath } from "next/cache"
@@ -98,6 +98,44 @@ export async function deleteSkill(id: number) {
   return { success: true }
 }
 
+export async function updateSkill(
+  id: number,
+  data: Partial<{
+    name: string
+    categories: string[]
+    level: number
+    icon: string
+    color: string
+  }>
+) {
+  const updateData: Record<string, unknown> = {}
+
+  if (data.name !== undefined) updateData.name = data.name
+  if (data.categories !== undefined) updateData.categories = JSON.stringify(data.categories)
+  if (data.level !== undefined) updateData.level = data.level
+  if (data.icon !== undefined) updateData.icon = data.icon
+  if (data.color !== undefined) updateData.color = data.color
+
+  const [updated] = await db
+    .update(skills)
+    .set(updateData)
+    .where(eq(skills.id, id))
+    .returning()
+
+  // Parse categories back to array for return
+  const result = updated
+    ? {
+        ...updated,
+        categories: JSON.parse(updated.categories || "[]") as string[],
+      }
+    : null
+
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+
+  return result
+}
+
 export async function updateProject(
   id: number,
   data: Partial<{
@@ -138,6 +176,47 @@ export async function updateProject(
   revalidatePath(`/projects/${updated?.slug}`)
 
   return updated
+}
+
+export async function addSkillToProject(projectId: number, skillId: number) {
+  // Check if relationship already exists
+  const existing = await db
+    .select()
+    .from(projectsToSkills)
+    .where(eq(projectsToSkills.projectId, projectId))
+
+  const alreadyExists = existing.some((rel) => rel.skillId === skillId)
+  if (alreadyExists) {
+    return { success: false, error: "Skill already assigned to project" }
+  }
+
+  await db.insert(projectsToSkills).values({
+    projectId,
+    skillId,
+  })
+
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  revalidatePath("/projects")
+
+  return { success: true }
+}
+
+export async function removeSkillFromProject(projectId: number, skillId: number) {
+  await db
+    .delete(projectsToSkills)
+    .where(
+      and(
+        eq(projectsToSkills.projectId, projectId),
+        eq(projectsToSkills.skillId, skillId)
+      )
+    )
+
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  revalidatePath("/projects")
+
+  return { success: true }
 }
 
 export async function renameCategory(oldName: string, newName: string) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getProjectBySlug } from "@/server/queries"
+import { getProjectBySlug, getSkills } from "@/server/queries"
 import { ArrowLeft } from "lucide-react"
 import { MagicHeader } from "@/components/magic-header"
 import { StarryBackground } from "@/components/starry-background"
@@ -40,7 +40,10 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 export default async function ProjectPage({ params }: ProjectPageProps) {
   try {
     const { slug } = await params
-    const project = await getProjectBySlug(slug)
+    const [project, allSkills] = await Promise.all([
+      getProjectBySlug(slug),
+      getSkills(),
+    ])
 
     if (!project) {
       notFound()
@@ -64,7 +67,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               Back to Projects
             </Link>
 
-            <ProjectEditableContent project={project} />
+            <ProjectEditableContent project={project} allSkills={allSkills} />
           </div>
         </div>
       </div>

@@ -11,14 +11,17 @@ import { Button } from "@/components/ui/button"
 import { EditableField } from "@/components/editable-field"
 import { ImageDropzone } from "@/components/image-dropzone"
 import { MDXContent } from "@/components/mdx-content"
+import { EditableSkills } from "@/components/editable-skills"
 import { updateProject } from "@/server/actions"
 import type { ProjectWithSkills } from "@/types/projects"
+import type { Skill } from "@/types/skills"
 
 interface ProjectEditableContentProps {
   project: ProjectWithSkills
+  allSkills: Skill[]
 }
 
-export function ProjectEditableContent({ project }: ProjectEditableContentProps) {
+export function ProjectEditableContent({ project, allSkills }: ProjectEditableContentProps) {
   const router = useRouter()
   const [isEditingImage, setIsEditingImage] = useState(false)
   const [currentProject, setCurrentProject] = useState(project)
@@ -70,16 +73,30 @@ export function ProjectEditableContent({ project }: ProjectEditableContentProps)
         </SignedOut>
 
         {/* Skills badges */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {currentProject.skills.map((skill) => (
-            <Badge
-              key={skill.id}
-              className="bg-[#B97452]/20 text-[#C17E3D] hover:bg-[#B97452]/30"
-            >
-              {skill.name}
-            </Badge>
-          ))}
-        </div>
+        <SignedIn>
+          <div className="mb-6">
+            <EditableSkills
+              projectId={currentProject.id}
+              assignedSkills={currentProject.skills}
+              allSkills={allSkills}
+              onUpdate={(skills) =>
+                setCurrentProject((prev) => ({ ...prev, skills }))
+              }
+            />
+          </div>
+        </SignedIn>
+        <SignedOut>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {currentProject.skills.map((skill) => (
+              <Badge
+                key={skill.id}
+                className="bg-[#B97452]/20 text-[#C17E3D] hover:bg-[#B97452]/30"
+              >
+                {skill.name}
+              </Badge>
+            ))}
+          </div>
+        </SignedOut>
 
         {/* Case Study */}
         <SignedIn>
@@ -96,7 +113,7 @@ export function ProjectEditableContent({ project }: ProjectEditableContentProps)
         </SignedIn>
         <SignedOut>
           <div className="prose prose-invert prose-amber max-w-none">
-            <MDXContent content={currentProject.caseStudy} />
+            <MDXContent content={currentProject.caseStudy || ""} />
           </div>
         </SignedOut>
       </div>

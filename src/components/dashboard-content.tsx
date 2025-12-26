@@ -11,7 +11,7 @@ import { Plus, Trash2, X, Check, Edit2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Skill } from "@/types/skills"
 import type { Project } from "@/types/projects"
-import { createProject, deleteProject, createSkill, deleteSkill, renameCategory } from "@/server/actions"
+import { createProject, deleteProject, createSkill, deleteSkill, updateSkill, renameCategory } from "@/server/actions"
 
 export function DashboardContent() {
   const queryClient = useQueryClient()
@@ -70,11 +70,22 @@ export function DashboardContent() {
     },
   })
 
+  const updateSkillMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateSkill>[1] }) =>
+      updateSkill(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] })
+    },
+  })
+
   const loading = projectsLoading || skillsLoading
 
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [newSkillName, setNewSkillName] = useState("")
   const [newSkillCategories, setNewSkillCategories] = useState<string[]>([])
+  const [newSkillLevel, setNewSkillLevel] = useState(50)
+  const [editingSkillLevel, setEditingSkillLevel] = useState<number | null>(null)
+  const [editingLevelValue, setEditingLevelValue] = useState(50)
   const [error, setError] = useState("")
 
   const [isAddingProject, setIsAddingProject] = useState(false)
@@ -145,13 +156,14 @@ export function DashboardContent() {
       await createSkillMutation.mutateAsync({
         name: newSkillName.trim(),
         categories: newSkillCategories,
-        level: 50, // Default level
+        level: newSkillLevel,
         icon: "code", // Default icon
         color: "from-[#B97452] to-[#C17E3D]", // Default color
       })
 
       setNewSkillName("")
       setNewSkillCategories([])
+      setNewSkillLevel(50)
       setIsAddingSkill(false)
       
       // Update local categories if new ones were added
@@ -167,7 +179,29 @@ export function DashboardContent() {
     setIsAddingSkill(false)
     setNewSkillName("")
     setNewSkillCategories([])
+    setNewSkillLevel(50)
     setError("")
+  }
+
+  const handleStartEditLevel = (skill: Skill) => {
+    setEditingSkillLevel(skill.id)
+    setEditingLevelValue(skill.level)
+  }
+
+  const handleSaveLevel = async (skillId: number) => {
+    try {
+      await updateSkillMutation.mutateAsync({
+        id: skillId,
+        data: { level: editingLevelValue },
+      })
+      setEditingSkillLevel(null)
+    } catch (error) {
+      console.error("Error updating skill level:", error)
+    }
+  }
+
+  const handleCancelEditLevel = () => {
+    setEditingSkillLevel(null)
   }
 
   const handleRemoveSkill = async (skillId: number) => {
@@ -445,7 +479,47 @@ export function DashboardContent() {
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[#FAE3C6]">{skill.level}%</td>
+                      <td className="py-3 px-4">
+                        {editingSkillLevel === skill.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={editingLevelValue}
+                              onChange={(e) => setEditingLevelValue(Number(e.target.value))}
+                              className="w-16 px-2 py-1 bg-[#1a1f2e] border border-[#B97452]/50 rounded text-[#FAE3C6] text-sm text-center focus:outline-none focus:border-[#C17E3D] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="text-[#FAE3C6]/60 text-sm">%</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSaveLevel(skill.id)}
+                              className="text-green-400 hover:text-green-300 hover:bg-green-500/20 p-1 h-auto"
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEditLevel}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/20 p-1 h-auto"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditLevel(skill)}
+                            className="text-[#FAE3C6] hover:text-[#C17E3D] transition-colors cursor-pointer flex items-center gap-2"
+                            title="Click to edit level"
+                          >
+                            {skill.level}%
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <Button
                           variant="ghost"
@@ -497,7 +571,19 @@ export function DashboardContent() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[#FAE3C6]/50">50%</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={newSkillLevel}
+                            onChange={(e) => setNewSkillLevel(Number(e.target.value))}
+                            className="w-16 px-2 py-1 bg-[#1a1f2e] border border-[#B97452]/50 rounded text-[#FAE3C6] text-sm text-center focus:outline-none focus:border-[#C17E3D] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <span className="text-[#FAE3C6]/60 text-sm">%</span>
+                        </div>
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button
@@ -692,7 +778,7 @@ export function DashboardContent() {
         <CardContent className="p-8 text-center">
           <h3 className="text-2xl font-bold text-[#C17E3D] mb-4">Ready to Showcase Your Next Creation?</h3>
           <p className="text-[#FAE3C6]/80 mb-6 max-w-2xl mx-auto">
-            Add a new project to your magical portfolio and share your latest enchanted work with the world.
+            Add a new project to your portfolio and share your latest enchanted work with the world.
           </p>
           <Button
             onMouseUp={() => setIsAddingProject(true)}

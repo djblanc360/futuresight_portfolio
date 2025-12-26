@@ -61,13 +61,7 @@ function SkillCard({ skill, isDragging, isInDeck }: SkillCardProps) {
           <Badge
             variant="outline"
             className={cn(
-              "text-xs px-1 py-0 border-[#B97452]/30",
-              skill.categories.includes("Frontend") && "bg-[#B97452]/20 text-[#C17E3D]",
-              skill.categories.includes("Backend") && "bg-[#C17E3D]/20 text-[#B97452]",
-              skill.categories.includes("Database") && "bg-[#FAE3C6]/20 text-[#C17E3D]",
-              skill.categories.includes("Cloud & DevOps") && "bg-[#B97452]/30 text-[#FAE3C6]",
-              skill.categories.includes("Testing") && "bg-[#C17E3D]/30 text-[#FAE3C6]",
-              skill.categories.includes("Tools") && "bg-[#FAE3C6]/30 text-[#030304]",
+              "text-xs px-1 py-0 border-[#B97452]/30 bg-[#B97452]/20 text-[#C17E3D]"
             )}
           >
             {skill.categories[0]?.split(" ")[0] || "Skill"}
@@ -358,7 +352,7 @@ export function ProjectFilter() {
                     {skill && (
                       <button
                         onClick={() => removeSkillFromSlot(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors cursor-pointer"
                       >
                         ×
                       </button>
