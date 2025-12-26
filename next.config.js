@@ -14,6 +14,11 @@ const config = {
     typescript: {
         ignoreBuildErrors: true,
     },
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "10mb", // Allow larger image uploads
+        },
+    },
 };
 
 export default config;

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Upload, X, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button"
 interface ImageDropzoneProps {
   currentImage?: string | null
   onImageChange: (imageUrl: string | null) => void
-  onCancel: () => void
+  onCancel?: () => void
   className?: string
+  /** When true, hides action buttons and updates parent immediately on image selection */
+  inline?: boolean
 }
 
 export function ImageDropzone({
@@ -17,11 +19,18 @@ export function ImageDropzone({
   onImageChange,
   onCancel,
   className = "",
+  inline = false,
 }: ImageDropzoneProps) {
   const [preview, setPreview] = useState<string | null>(currentImage || null)
   const [isDragging, setIsDragging] = useState(false)
   const [urlInput, setUrlInput] = useState(currentImage || "")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync preview with currentImage prop changes (for controlled mode)
+  useEffect(() => {
+    setPreview(currentImage || null)
+    setUrlInput(currentImage || "")
+  }, [currentImage])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -57,6 +66,10 @@ export function ImageDropzone({
       const dataUrl = e.target?.result as string
       setPreview(dataUrl)
       setUrlInput(dataUrl)
+      // In inline mode, update parent immediately
+      if (inline) {
+        onImageChange(dataUrl)
+      }
     }
     reader.readAsDataURL(file)
   }
@@ -70,7 +83,12 @@ export function ImageDropzone({
 
   const handleUrlSubmit = () => {
     if (urlInput.trim()) {
-      setPreview(urlInput.trim())
+      const url = urlInput.trim()
+      setPreview(url)
+      // In inline mode, update parent immediately
+      if (inline) {
+        onImageChange(url)
+      }
     }
   }
 
@@ -83,6 +101,10 @@ export function ImageDropzone({
     setUrlInput("")
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
+    }
+    // In inline mode, update parent immediately
+    if (inline) {
+      onImageChange(null)
     }
   }
 
@@ -168,24 +190,26 @@ export function ImageDropzone({
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-2 justify-end">
-        <Button
-          type="button"
-          onClick={onCancel}
-          variant="outline"
-          className="border-[#B97452]/50 text-[#FAE3C6]/70 hover:bg-[#B97452]/10"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSave}
-          className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6]"
-        >
-          Save Image
-        </Button>
-      </div>
+      {/* Action Buttons - only shown in non-inline mode */}
+      {!inline && onCancel && (
+        <div className="flex gap-2 justify-end">
+          <Button
+            type="button"
+            onClick={onCancel}
+            variant="outline"
+            className="border-[#B97452]/50 text-[#FAE3C6]/70 hover:bg-[#B97452]/10"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            className="bg-[#B97452] hover:bg-[#C17E3D] text-[#FAE3C6]"
+          >
+            Save Image
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

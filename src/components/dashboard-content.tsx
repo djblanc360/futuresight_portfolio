@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import type { Skill } from "@/types/skills"
 import type { Project } from "@/types/projects"
 import { createProject, deleteProject, createSkill, deleteSkill, updateSkill, renameCategory } from "@/server/actions"
+import { ImageDropzone } from "@/components/image-dropzone"
 
 export function DashboardContent() {
   const queryClient = useQueryClient()
@@ -878,12 +879,11 @@ export function DashboardContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Image URL</label>
-                    <Input
-                      value={newProject.imageUrl}
-                      onChange={(e) => setNewProject({ ...newProject, imageUrl: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      className="bg-[#030304]/50 border-[#B97452]/30 text-[#FAE3C6]"
+                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Project Image</label>
+                    <ImageDropzone
+                      currentImage={newProject.imageUrl || null}
+                      onImageChange={(url) => setNewProject({ ...newProject, imageUrl: url || "" })}
+                      inline
                     />
                   </div>
 
