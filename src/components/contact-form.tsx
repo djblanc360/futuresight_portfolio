@@ -7,25 +7,56 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Sparkles } from "lucide-react"
+import { useMutation } from "@tanstack/react-query"
+
+type SendEmailData = {
+  name: string
+  email: string
+  message: string
+}
 
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+
+  const sendEmailMutation = useMutation({
+    mutationFn: async (data: SendEmailData) => {
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to send email')
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      setIsSubmitting(false)
+      setIsSubmitted(true)
+      setName('')
+      setEmail('')
+      setMessage('')
+    },
+    onError: () => {
+      setIsSubmitting(false)
+    },
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSubmitted(true)
+    sendEmailMutation.mutate({
+      name,
+      email,
+      message,
+    })
 
-      // Reset form after showing success message
-      setTimeout(() => {
-        setIsSubmitted(false)
-      }, 3000)
-    }, 1500)
   }
 
   return (
@@ -33,7 +64,9 @@ export function ContactForm() {
       <div className="space-y-4">
         <div className="relative">
           <Input
-            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name"
             className="bg-[#222B39] border-[#B97452]/30 focus:border-[#C17E3D] text-[#FAE3C6] placeholder:text-[#FAE3C6]/50 h-12"
             required
             disabled={isSubmitting}
@@ -44,7 +77,9 @@ export function ContactForm() {
         <div className="relative">
           <Input
             type="email"
-            placeholder="Your Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
             className="bg-[#222B39] border-[#B97452]/30 focus:border-[#C17E3D] text-[#FAE3C6] placeholder:text-[#FAE3C6]/50 h-12"
             required
             disabled={isSubmitting}
@@ -54,7 +89,9 @@ export function ContactForm() {
 
         <div className="relative">
           <Textarea
-            placeholder="Your Message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Message"
             className="bg-[#222B39] border-[#B97452]/30 focus:border-[#C17E3D] text-[#FAE3C6] placeholder:text-[#FAE3C6]/50 min-h-[150px] resize-none"
             required
             disabled={isSubmitting}
