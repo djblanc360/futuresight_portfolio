@@ -4,6 +4,19 @@ import { projects, skills, projectsToSkills, type Project, type Skill, type Proj
 import { eq, desc } from "drizzle-orm"
 import type { CreateProjectRequest } from "@/types/projects"
 
+// Helper to parse month string (YYYY-MM) to Date
+function parseMonthToDate(monthStr: string | undefined): Date | null {
+  if (!monthStr) return null
+  // Handle both "YYYY-MM" and "YYYY-MM-DD" formats
+  const parts = monthStr.split("-")
+  if (parts.length >= 2) {
+    const year = parseInt(parts[0]!, 10)
+    const month = parseInt(parts[1]!, 10) - 1 // JS months are 0-indexed
+    return new Date(year, month, 1)
+  }
+  return null
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const featured = searchParams.get("featured")
@@ -143,7 +156,7 @@ export async function POST(request: Request) {
         title: body.title,
         slug: body.slug,
         company: body.company,
-        date: body.date ? new Date(body.date) : null,
+        date: parseMonthToDate(body.date),
         description: body.description,
         githubUrl: body.githubUrl || null,
         demoUrl: body.demoUrl || null,

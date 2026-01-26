@@ -5,13 +5,26 @@ import { db } from "./db"
 import { projects, skills, projectsToSkills } from "./db/schema"
 import { revalidatePath } from "next/cache"
 
+// Helper to parse month string (YYYY-MM) to Date
+function parseMonthToDate(monthStr: string | undefined): Date | null {
+  if (!monthStr) return null
+  // Handle both "YYYY-MM" and "YYYY-MM-DD" formats
+  const parts = monthStr.split("-")
+  if (parts.length >= 2) {
+    const year = parseInt(parts[0]!, 10)
+    const month = parseInt(parts[1]!, 10) - 1 // JS months are 0-indexed
+    return new Date(year, month, 1)
+  }
+  return null
+}
+
 export async function createProject(projectData: {
   title: string
   slug: string
   company: string
   description: string
   caseStudy: string
-  date: string
+  date?: string
   githubUrl?: string
   demoUrl?: string
   imageUrl?: string
@@ -25,7 +38,7 @@ export async function createProject(projectData: {
       company: projectData.company,
       description: projectData.description,
       caseStudy: projectData.caseStudy,
-      date: new Date(projectData.date),
+      date: parseMonthToDate(projectData.date),
       githubUrl: projectData.githubUrl || null,
       demoUrl: projectData.demoUrl || null,
       imageUrl: projectData.imageUrl || null,
@@ -158,7 +171,7 @@ export async function updateProject(
   if (data.company !== undefined) updateData.company = data.company
   if (data.description !== undefined) updateData.description = data.description
   if (data.caseStudy !== undefined) updateData.caseStudy = data.caseStudy
-  if (data.date !== undefined) updateData.date = new Date(data.date)
+  if (data.date !== undefined) updateData.date = parseMonthToDate(data.date)
   if (data.githubUrl !== undefined) updateData.githubUrl = data.githubUrl
   if (data.demoUrl !== undefined) updateData.demoUrl = data.demoUrl
   if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl

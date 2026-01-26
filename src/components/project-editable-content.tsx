@@ -39,17 +39,20 @@ export function ProjectEditableContent({ project, allSkills }: ProjectEditableCo
     }
   }
 
-  const formatDate = (date: Date | undefined) => {
+  const formatDate = (date: Date | null | undefined) => {
     if (!date) return "-"
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
-      month: "long",
+      month: "short",
     })
   }
 
-  const formatDateForInput = (date: Date | undefined) => {
+  const formatDateForInput = (date: Date | null | undefined) => {
     if (!date) return ""
-    return new Date(date).toISOString().split("T")[0] || ""
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, "0")
+    return `${year}-${month}`
   }
 
   return (
@@ -196,7 +199,7 @@ export function ProjectEditableContent({ project, allSkills }: ProjectEditableCo
               <EditableField
                 value={formatDateForInput(currentProject.date)}
                 onSave={(value) => handleUpdate("date", value)}
-                fieldType="date"
+                fieldType="month"
                 label="Date"
                 displayClassName="text-[#FAE3C6]"
                 renderDisplay={() => formatDate(currentProject.date)}

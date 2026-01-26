@@ -844,9 +844,9 @@ export function DashboardContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Date</label>
+                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Date (Month/Year)</label>
                     <Input
-                      type="date"
+                      type="month"
                       value={newProject.date}
                       onChange={(e) => setNewProject({ ...newProject, date: e.target.value })}
                       className="bg-[#030304]/50 border-[#B97452]/30 text-[#FAE3C6]"

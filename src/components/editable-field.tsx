@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { SquarePen, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type FieldType = "text" | "textarea" | "date" | "url"
+type FieldType = "text" | "textarea" | "date" | "month" | "url"
 
 interface EditableFieldProps {
   value: string
@@ -43,7 +43,7 @@ export function EditableField({
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
-      if (fieldType !== "date") {
+      if (fieldType !== "date" && fieldType !== "month") {
         inputRef.current.select()
       }
     }
@@ -119,8 +119,8 @@ export function EditableField({
         ) : (
           <input
             ref={inputRef as React.RefObject<HTMLInputElement>}
-            type={fieldType === "date" ? "date" : fieldType === "url" ? "url" : "text"}
-            value={fieldType === "date" && editValue ? editValue.split("T")[0] : editValue}
+            type={fieldType === "date" ? "date" : fieldType === "month" ? "month" : fieldType === "url" ? "url" : "text"}
+            value={fieldType === "date" && editValue ? editValue.split("T")[0] : fieldType === "month" && editValue ? editValue.slice(0, 7) : editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
