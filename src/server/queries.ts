@@ -1,21 +1,52 @@
 import { cache } from "react"
-import type { ProjectWithSkills, SkillWithProjects } from "./db/schema"
+import { db } from "./db"
+import { projects, skills, projectsToSkills } from "./db/schema"
+import { eq, desc } from "drizzle-orm"
+import type { ProjectWithSkills } from "@/types/projects"
+import type { Skill } from "@/types/skills"
+
+// Helper to parse skill categories from JSON string
+function parseSkillCategories(skill: typeof skills.$inferSelect) {
+  return {
+    ...skill,
+    categories: JSON.parse(skill.categories) as string[],
+  }
+}
 
 // Cached data fetching functions for use in React Server Components
 export const getProjects = cache(async (): Promise<ProjectWithSkills[]> => {
   try {
-    // Use relative URL for API routes in the same app
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/projects`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
+    const result = await db
+      .select({
+        project: projects,
+        skill: skills,
+      })
+      .from(projects)
+      .leftJoin(projectsToSkills, eq(projects.id, projectsToSkills.projectId))
+      .leftJoin(skills, eq(projectsToSkills.skillId, skills.id))
+      .orderBy(desc(projects.date))
+
+    // Group projects and their skills
+    const projectsMap = new Map<number, ProjectWithSkills>()
+
+    result.forEach((row) => {
+      if (!projectsMap.has(row.project.id)) {
+        projectsMap.set(row.project.id, {
+          ...row.project,
+          skills: [],
+        })
+      }
+
+      if (row.skill) {
+        const project = projectsMap.get(row.project.id)!
+        const skill = parseSkillCategories(row.skill)
+        if (!project.skills.some((s) => s.id === skill.id)) {
+          project.skills.push(skill)
+        }
+      }
     })
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to fetch projects: ${res.status} ${res.statusText}`)
-    }
-
-    return res.json()
+    return Array.from(projectsMap.values())
   } catch (error) {
     console.error("Error in getProjects:", error)
     throw error
@@ -24,80 +55,106 @@ export const getProjects = cache(async (): Promise<ProjectWithSkills[]> => {
 
 export const getFeaturedProjects = cache(async (): Promise<ProjectWithSkills[]> => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/projects?featured=true`,
-      {
-        next: { revalidate: 3600 }, // Revalidate every hour
-      },
-    )
+    const result = await db
+      .select({
+        project: projects,
+        skill: skills,
+      })
+      .from(projects)
+      .leftJoin(projectsToSkills, eq(projects.id, projectsToSkills.projectId))
+      .leftJoin(skills, eq(projectsToSkills.skillId, skills.id))
+      .where(eq(projects.featured, 1))
+      .orderBy(desc(projects.date))
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to fetch featured projects: ${res.status} ${res.statusText}`)
-    }
+    // Group projects and their skills
+    const projectsMap = new Map<number, ProjectWithSkills>()
 
-    return res.json()
+    result.forEach((row) => {
+      if (!projectsMap.has(row.project.id)) {
+        projectsMap.set(row.project.id, {
+          ...row.project,
+          skills: [],
+        })
+      }
+
+      if (row.skill) {
+        const project = projectsMap.get(row.project.id)!
+        const skill = parseSkillCategories(row.skill)
+        if (!project.skills.some((s) => s.id === skill.id)) {
+          project.skills.push(skill)
+        }
+      }
+    })
+
+    return Array.from(projectsMap.values())
   } catch (error) {
     console.error("Error in getFeaturedProjects:", error)
     throw error
   }
 })
 
-export const getProjectBySlug = cache(async (slug: string): Promise<ProjectWithSkills> => {
+export const getProjectBySlug = cache(async (slug: string): Promise<ProjectWithSkills | null> => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/projects?slug=${slug}`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    })
+    const result = await db
+      .select({
+        project: projects,
+        skill: skills,
+      })
+      .from(projects)
+      .leftJoin(projectsToSkills, eq(projects.id, projectsToSkills.projectId))
+      .leftJoin(skills, eq(projectsToSkills.skillId, skills.id))
+      .where(eq(projects.slug, slug))
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to fetch project with slug ${slug}: ${res.status} ${res.statusText}`)
+    if (result.length === 0) {
+      return null
     }
 
-    return res.json()
+    // Group skills for the project
+    const project = result[0]!.project
+    const projectSkills = result
+      .filter((row) => row.skill !== null)
+      .map((row) => parseSkillCategories(row.skill!))
+      // Remove duplicates
+      .filter((skill, index, self) => self.findIndex((s) => s.id === skill.id) === index)
+
+    return {
+      ...project,
+      skills: projectSkills,
+    }
   } catch (error) {
     console.error(`Error in getProjectBySlug for slug ${slug}:`, error)
     throw error
   }
 })
 
-export const getSkills = cache(async (): Promise<SkillWithProjects[]> => {
+export const getSkills = cache(async (): Promise<Skill[]> => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/skills`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    })
+    const result = await db.select().from(skills).orderBy(skills.name)
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to fetch skills: ${res.status} ${res.statusText}`)
-    }
-
-    return res.json()
+    return result.map(parseSkillCategories)
   } catch (error) {
     console.error("Error in getSkills:", error)
     throw error
   }
 })
 
-export const getSkillsByCategory = cache(async (): Promise<Record<string, SkillWithProjects[]>> => {
+export const getSkillsByCategory = cache(async (): Promise<Record<string, Skill[]>> => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/skills?byCategory=true`,
-      {
-        next: { revalidate: 3600 }, // Revalidate every hour
-      },
-    )
+    const result = await db.select().from(skills).orderBy(skills.name)
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      console.error("API error:", errorData)
-      throw new Error(`Failed to fetch skills by category: ${res.status} ${res.statusText}`)
-    }
+    const categories: Record<string, Skill[]> = {}
 
-    return res.json()
+    result.forEach((skill) => {
+      const parsedSkill = parseSkillCategories(skill)
+      parsedSkill.categories.forEach((category) => {
+        if (!categories[category]) {
+          categories[category] = []
+        }
+        categories[category]!.push(parsedSkill)
+      })
+    })
+
+    return categories
   } catch (error) {
     console.error("Error in getSkillsByCategory:", error)
     throw error
