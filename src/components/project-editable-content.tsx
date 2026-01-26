@@ -147,7 +147,13 @@ export function ProjectEditableContent({ project, allSkills }: ProjectEditableCo
                     />
                   ) : (
                     <div className="w-full h-48 bg-[#1a1f2e] flex items-center justify-center">
-                      <span className="text-[#FAE3C6]/40">No image</span>
+                        <Image
+                          src="/images/placeholder.png"
+                          alt="Placeholder"
+                          width={500}
+                          height={300}
+                          className="w-full h-48 object-cover"
+                        />
                     </div>
                   )}
                   <button
