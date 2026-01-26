@@ -232,11 +232,6 @@ export function DashboardContent() {
       return
     }
 
-    if (!newProject.date) {
-      setProjectError("Date is required")
-      return
-    }
-
     if (!newProject.description.trim()) {
       setProjectError("Description is required")
       return
@@ -849,7 +844,7 @@ export function DashboardContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Date *</label>
+                    <label className="block text-sm font-medium text-[#C17E3D] mb-2">Date</label>
                     <Input
                       type="date"
                       value={newProject.date}
@@ -915,7 +910,7 @@ export function DashboardContent() {
 
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-[#C17E3D] mb-2">
-                      Case Study * (Markdown supported)
+                      Case Study (Markdown supported)
                     </label>
                     <textarea
                       value={newProject.caseStudy}

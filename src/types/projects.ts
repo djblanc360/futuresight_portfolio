@@ -4,12 +4,12 @@ export type Project = {
   title: string
   slug: string
   company: string
-  date?: Date
+  date: Date | null
   description: string
-  githubUrl?: string | null
-  demoUrl?: string | null
+  githubUrl: string | null
+  demoUrl: string | null
   imageUrl: string | null
-  caseStudy?: string
+  caseStudy: string | null
   featured: number | null
   createdAt: Date | null
 }
@@ -32,7 +32,7 @@ export type CreateProjectRequest = {
   title: string
   slug: string
   company: string
-  date: string
+  date?: string
   description: string
   caseStudy?: string
   githubUrl?: string

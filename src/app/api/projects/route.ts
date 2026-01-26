@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     const body = await request.json() as CreateProjectRequest
 
     // Validate required fields
-    const requiredFields: (keyof CreateProjectRequest)[] = ["title", "slug", "company", "date", "description", "caseStudy"]
+    const requiredFields: (keyof CreateProjectRequest)[] = ["title", "slug", "company", "description"]
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json({ error: `${field} is required` }, { status: 400 })
@@ -143,12 +143,12 @@ export async function POST(request: Request) {
         title: body.title,
         slug: body.slug,
         company: body.company,
-        date: new Date(body.date),
+        date: body.date ? new Date(body.date) : null,
         description: body.description,
         githubUrl: body.githubUrl || null,
         demoUrl: body.demoUrl || null,
         imageUrl: body.imageUrl || null,
-        caseStudy: body.caseStudy || "",
+        caseStudy: body.caseStudy || null,
         featured: body.featured ?? 0,
       })
       .returning()
